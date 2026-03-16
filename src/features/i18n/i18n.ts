@@ -2,9 +2,9 @@ import i18n from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
 
-import ar from "@/content/locales/ar";
-import en from "@/content/locales/en";
-import fr from "@/content/locales/fr";
+import ar from "@/content/locales/ar/index";
+import en from "@/content/locales/en/index";
+import fr from "@/content/locales/fr/index";
 
 export const supportedLanguages = ["fr", "en", "ar"] as const;
 

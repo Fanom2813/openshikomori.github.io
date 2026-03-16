@@ -13,6 +13,7 @@ type SectionJumpButtonProps = {
   size?: ButtonSize;
   targetId: string;
   variant?: ButtonVariant;
+  onClick?: () => void;
 };
 
 function jumpToSection(targetId: string) {
@@ -47,13 +48,17 @@ export function SectionJumpButton({
   size = "default",
   targetId,
   variant = "default",
+  onClick,
 }: SectionJumpButtonProps) {
   return (
     <button
       aria-controls={targetId}
       className={cn(buttonVariants({ variant, size }), className)}
       data-section-target={targetId}
-      onClick={() => jumpToSection(targetId)}
+      onClick={() => {
+        jumpToSection(targetId);
+        onClick?.();
+      }}
       type="button"
     >
       {children}

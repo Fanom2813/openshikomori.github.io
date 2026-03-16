@@ -5,7 +5,12 @@ import {
   useRouteError,
 } from "react-router";
 
+import { AboutPage } from "@/pages/AboutPage";
+import { DatasetPage } from "@/pages/DatasetPage";
 import { HomePage } from "@/pages/HomePage";
+import { RoadmapPage } from "@/pages/RoadmapPage";
+import { TermsPage } from "@/pages/TermsPage";
+import { PrivacyPage } from "@/pages/PrivacyPage";
 import { PublicLayout } from "@/shared/ui/PublicLayout";
 
 function PublicRouteError() {
@@ -20,7 +25,7 @@ function PublicRouteError() {
 
   return (
     <main className="min-h-screen bg-[var(--page-background)] px-6 py-16 text-foreground sm:px-10">
-      <div className="mx-auto flex max-w-2xl flex-col gap-5 rounded-[2rem] border border-border/60 bg-card/90 p-8 shadow-[0_24px_70px_rgba(14,31,24,0.08)]">
+      <div className="mx-auto flex max-w-2xl flex-col gap-5 border border-border/60 bg-card/90 p-8 shadow-xl">
         <p className="text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-primary">
           Comorian Voice Commons
         </p>
@@ -28,7 +33,7 @@ function PublicRouteError() {
         <p className="text-base leading-7 text-muted-foreground">{description}</p>
         <div>
           <Link
-            className="inline-flex h-11 items-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+            className="inline-flex h-11 items-center border border-border bg-primary px-5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
             to="/"
           >
             Return home
@@ -48,6 +53,26 @@ export const appRouter = createHashRouter([
       {
         index: true,
         element: <HomePage />,
+      },
+      {
+        path: "about",
+        element: <AboutPage />,
+      },
+      {
+        path: "dataset",
+        element: <DatasetPage />,
+      },
+      {
+        path: "roadmap",
+        element: <RoadmapPage />,
+      },
+      {
+        path: "terms",
+        element: <TermsPage />,
+      },
+      {
+        path: "privacy",
+        element: <PrivacyPage />,
       },
     ],
   },
