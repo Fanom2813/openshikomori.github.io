@@ -12,6 +12,18 @@ import { RoadmapPage } from "@/pages/RoadmapPage";
 import { TermsPage } from "@/pages/TermsPage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
 import { PublicLayout } from "@/shared/ui/PublicLayout";
+import {
+  ContributePage,
+  ReviewPage,
+  ContributeLayout,
+} from "@/features/contribution";
+import {
+  AdminLayout,
+  AdminLoginPage,
+  AdminDashboardPage,
+  AdminClipsPage,
+  AdminContributorsPage,
+} from "@/features/admin";
 
 function PublicRouteError() {
   const error = useRouteError();
@@ -75,5 +87,50 @@ export const appRouter = createHashRouter([
         element: <PrivacyPage />,
       },
     ],
+  },
+  // Contribute Routes - Separate layout for post-auth experience
+  {
+    path: "/contribute",
+    element: <ContributeLayout />,
+    errorElement: <PublicRouteError />,
+    children: [
+      {
+        index: true,
+        element: <ContributePage />,
+      },
+      {
+        path: "stats",
+        element: <ContributePage />,
+      },
+      {
+        path: "review",
+        element: <ReviewPage />,
+      },
+    ],
+  },
+  // Admin Routes - Separate layout
+  {
+    path: "/admin",
+    element: <AdminLayout />,
+    errorElement: <PublicRouteError />,
+    children: [
+      {
+        index: true,
+        element: <AdminDashboardPage />,
+      },
+      {
+        path: "clips",
+        element: <AdminClipsPage />,
+      },
+      {
+        path: "contributors",
+        element: <AdminContributorsPage />,
+      },
+    ],
+  },
+  {
+    path: "/admin/login",
+    element: <AdminLoginPage />,
+    errorElement: <PublicRouteError />,
   },
 ]);

@@ -76,9 +76,9 @@ export const legal = {
           "We use the following third-party services: GitHub API for displaying repository statistics, and Vercel/GitHub Pages for hosting. These services may collect data according to their own privacy policies.",
       },
       {
-        title: "6. Cookies",
+        title: "6. Cookies and Local Storage",
         content:
-          "We use minimal cookies for essential functionality, including language preference storage. We do not use tracking or advertising cookies.",
+          "We use essential cookies and browser storage for: Firebase Anonymous Authentication (session management, security), language preferences (localStorage), and contribution system data. These are strictly necessary for the service to function. We do not use tracking, analytics, or advertising cookies.",
       },
       {
         title: "7. Your Rights",

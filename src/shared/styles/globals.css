@@ -77,6 +77,20 @@
   --sidebar-ring: oklch(0.62 0.18 152);
 }
 
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/20 rounded-full;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/30;
+  }
+}
 @theme inline {
   --font-sans: "Geist Variable", system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);

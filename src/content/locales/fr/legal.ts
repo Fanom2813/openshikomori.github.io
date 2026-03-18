@@ -76,9 +76,9 @@ export const legal = {
           "Nous utilisons les services tiers suivants : API GitHub pour afficher les statistiques de dépôt, et Vercel/GitHub Pages pour l'hébergement. Ces services peuvent collecter des données conformément à leurs propres politiques de confidentialité.",
       },
       {
-        title: "6. Cookies",
+        title: "6. Cookies et Stockage Local",
         content:
-          "Nous utilisons des cookies minimaux pour la fonctionnalité essentielle, y compris le stockage des préférences linguistiques. Nous n'utilisons pas de cookies de suivi ou publicitaires.",
+          "Nous utilisons des cookies essentiels et le stockage du navigateur pour : l'authentification anonyme Firebase (gestion de session, sécurité), les préférences linguistiques (localStorage), et les données du système de contribution. Ceux-ci sont strictement nécessaires au fonctionnement du service. Nous n'utilisons pas de cookies de suivi, d'analyse ou publicitaires.",
       },
       {
         title: "7. Vos Droits",

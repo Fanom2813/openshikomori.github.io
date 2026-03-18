@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Menu, X, ArrowUpRight, Github } from "lucide-react";
 import { Link, useLocation } from "react-router";
+import { useContribution } from "@/features/contribution";
 
 const navigationItems = [
   { key: "about", path: "/about", label: "About" },
@@ -12,6 +13,7 @@ export function Nav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const { openContributionModal } = useContribution();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -88,15 +90,13 @@ export function Nav() {
           >
             <Github className="h-4 w-4" />
           </a>
-          <a
-            href="https://github.com/Open-Shikomori/Open-Shikomori.github.io"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-2 inline-flex h-9 items-center gap-2 border border-border bg-foreground px-4 text-xs font-semibold uppercase tracking-wider text-background transition-all hover:bg-foreground/90"
+          <button
+            onClick={openContributionModal}
+            className="ml-2 inline-flex h-9 items-center gap-2 border border-border bg-primary px-4 text-xs font-semibold uppercase tracking-wider text-primary-foreground transition-all hover:opacity-90 cursor-pointer"
           >
-            Get Started
+            Contribute
             <ArrowUpRight className="h-3.5 w-3.5" />
-          </a>
+          </button>
         </div>
 
         {/* Mobile Menu Button */}
@@ -149,15 +149,16 @@ export function Nav() {
               >
                 <Github className="h-4 w-4" />
               </a>
-              <a
-                href="https://github.com/Open-Shikomori/Open-Shikomori.github.io"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-1 items-center justify-center gap-2 border border-border bg-foreground py-3 text-sm font-semibold uppercase tracking-wider text-background"
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  openContributionModal();
+                }}
+                className="flex flex-1 items-center justify-center gap-2 border border-border bg-primary py-3 text-sm font-semibold uppercase tracking-wider text-primary-foreground cursor-pointer"
               >
-                Get Started
+                Contribute
                 <ArrowUpRight className="h-4 w-4" />
-              </a>
+              </button>
             </div>
           </nav>
         </div>
