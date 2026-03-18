@@ -1,0 +1,13 @@
+{
+  "rules": [
+    {
+      "allowed": {
+        "origins": ["http://localhost:5173", "https://openshikomori.github.io"],
+        "methods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+        "headers": ["*"]
+      },
+      "expose": ["ETag"],
+      "maxAgeSeconds": 3600
+    }
+  ]
+}

@@ -110,7 +110,7 @@ export function ChatInputRecord({ onComplete, onGetSuggestion, isSuggesting, sug
                 {t('contribution.chat.gettingSuggestion')}
               </span>
             </motion.div>
-          ) : suggestedPhrase && !isRecording && !hasRecording ? (
+          ) : suggestedPhrase && !hasRecording ? (
             <>
               {isSuggestionVisible ? (
                 <motion.div

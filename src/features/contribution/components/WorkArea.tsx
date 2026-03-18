@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import type { ContributionMode, ContributionHistoryItem } from './types';
@@ -9,17 +9,32 @@ import { ChatInputRecord } from './ChatInputRecord';
 import { ChatFeedCorrect } from './ChatFeedCorrect';
 import { ChatFeedRecord } from './ChatFeedRecord';
 import { generateAIContent } from '@/lib/openrouter';
+import { useCreateContribution } from '../hooks/useContributions';
+import { toast } from 'sonner';
+import { updateOwnClipTranscription, updateOwnCorrection } from '../services/clips';
+import { ClipPlayer } from './ClipPlayer';
 
 interface WorkAreaProps {
   mode: ContributionMode;
   userId: string;
-  onContributionComplete: (type: 'record' | 'correct') => void;
+  onContributionComplete: (type: 'record' | 'correct', referenceId?: string) => void;
   selectedItem?: ContributionHistoryItem | null;
   onModeChange?: (mode: ContributionMode) => void;
   onBackToWork?: () => void;
+  history?: ContributionHistoryItem[];
+  onSelectItem?: (item: ContributionHistoryItem | null) => void;
 }
 
-export function WorkArea({ mode, userId, onContributionComplete, selectedItem, onModeChange, onBackToWork }: WorkAreaProps) {
+export function WorkArea({ 
+  mode, 
+  userId, 
+  onContributionComplete, 
+  selectedItem, 
+  onModeChange, 
+  onBackToWork,
+  history = [],
+  onSelectItem
+}: WorkAreaProps) {
   const { t, i18n } = useTranslation();
   const [pendingRecording, setPendingRecording] = useState<{
     blob: Blob, 
@@ -29,6 +44,43 @@ export function WorkArea({ mode, userId, onContributionComplete, selectedItem, o
   } | null>(null);
   const [suggestedPhrase, setSuggestedPhrase] = useState<string | null>(null);
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const suggestingRef = useRef(false);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState('');
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  // Reset edit state when selected item changes
+  useEffect(() => {
+    if (selectedItem) {
+      setIsEditing(false);
+      setEditValue(selectedItem.details);
+    }
+  }, [selectedItem]);
+
+  const handleSaveEdit = async () => {
+    if (!selectedItem || !selectedItem.referenceId || !editValue.trim()) return;
+
+    setIsSavingEdit(true);
+    try {
+      if (selectedItem.type === 'record') {
+        await updateOwnClipTranscription(selectedItem.referenceId, editValue.trim());
+      } else {
+        await updateOwnCorrection(selectedItem.referenceId, editValue.trim());
+      }
+      toast.success(t('contribution.chat.success', { defaultValue: 'Update saved!' }));
+      setIsEditing(false);
+      if (onBackToWork) onBackToWork(); // Go back to refresh the list
+      if (onSelectItem) onSelectItem(null); // Close review mode
+    } catch (error) {
+      console.error('Failed to update:', error);
+      toast.error(t('contribution.chat.error', { defaultValue: 'Failed to update.' }));
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const { submitContribution, isSubmitting } = useCreateContribution(userId);
 
   const handleRecordingComplete = (blob: Blob, duration: number, metadata: { language: string, dialect?: string }) => {
     setPendingRecording({
@@ -41,8 +93,11 @@ export function WorkArea({ mode, userId, onContributionComplete, selectedItem, o
   };
 
   const handleGetSuggestion = async (dialect?: string) => {
-    if (isSuggesting) return; // Prevent multiple concurrent requests
+    if (suggestingRef.current) return; // Prevent multiple concurrent requests synchronously
+    
+    suggestingRef.current = true;
     setIsSuggesting(true);
+    
     try {
       const resolvedLang = i18n.resolvedLanguage || 'fr';
       const baseLang = resolvedLang.split('-')[0];
@@ -73,100 +128,64 @@ export function WorkArea({ mode, userId, onContributionComplete, selectedItem, o
       console.error('Failed to get suggestion:', error);
     } finally {
       setIsSuggesting(false);
+      suggestingRef.current = false;
     }
   };
 
   const handleTranscriptionComplete = async (data: any) => {
-    // In a real app, send to server. For now, simulate delay and clear.
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setPendingRecording(null);
-    onContributionComplete('record');
-    // Get a fresh suggestion for the next recording
-    handleGetSuggestion();
+    if (!pendingRecording || !userId) return;
+
+    try {
+      // Use the actual service to submit
+      const clipId = await submitContribution(
+        pendingRecording.blob,
+        data.transcription,
+        data.language as any,
+        data.dialect as any,
+        undefined, // We'll let the service handle profile or lack thereof
+        false      // isAnonymous
+      );
+
+      if (clipId) {
+        setPendingRecording(null);
+        // We call onContributionComplete with the real clipId
+        onContributionComplete('record', clipId);
+        toast.success(t('contribution.chat.success', { defaultValue: 'Contribution recorded!' }));
+        // Get a fresh suggestion for the next recording
+        handleGetSuggestion();
+      } else {
+        toast.error(t('contribution.chat.error', { defaultValue: 'Failed to save contribution.' }));
+      }
+    } catch (error) {
+      console.error('Failed to submit contribution:', error);
+      toast.error(t('contribution.chat.error', { defaultValue: 'Failed to save contribution.' }));
+    }
   };
 
-  // Trigger initial suggestion on mount
+  // Trigger initial suggestion on mount or mode change
   useEffect(() => {
-    if (mode === 'record' && !suggestedPhrase && !isSuggesting) {
+    if (mode === 'record' && !suggestedPhrase && !isSuggesting && !suggestingRef.current && !selectedItem) {
       handleGetSuggestion();
     }
-  }, [mode]);
+  }, [mode, suggestedPhrase, isSuggesting, selectedItem]);
 
-  // 1. Review Mode (When a history item is selected)
-  if (selectedItem) {
-    return (
-      <div className="flex-1 flex flex-col w-full bg-background">
-        <div className="h-14 border-b border-border flex items-center px-4">
-           <Button variant="ghost" size="sm" onClick={onBackToWork} className="gap-2 -ml-2 text-muted-foreground">
-             <ArrowLeft className="h-4 w-4" />
-             {t('contribution.chat.backToChat')}
-           </Button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <History className="h-6 w-6" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold">{t('contribution.review.title')}</h3>
-              <p className="text-sm text-muted-foreground">
-                {new Date(selectedItem.date).toLocaleDateString()} {t('contribution.time.at')} {new Date(selectedItem.date).toLocaleTimeString()}
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-6">
-            <div className="p-6 rounded-xl bg-muted/30 border border-border space-y-4">
-              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                <Info className="h-3.5 w-3.5" />
-                {t('contribution.review.details')}
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">{t('contribution.review.type')}</p>
-                  <p className="text-sm font-medium capitalize">{selectedItem.type === 'record' ? t('contribution.sidebar.recorded') : t('contribution.sidebar.corrected')}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">{t('contribution.review.status')}</p>
-                  <div className="flex items-center gap-1.5">
-                    <div className={cn(
-                      "h-2 w-2 rounded-full",
-                      selectedItem.status === 'approved' ? "bg-green-500" : selectedItem.status === 'rejected' ? "bg-red-500" : "bg-amber-500"
-                    )} />
-                    <p className="text-sm font-medium capitalize">{t(`contribution.history.status.${selectedItem.status}`)}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 rounded-xl bg-muted/30 border border-border space-y-4">
-              <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                <FileText className="h-3.5 w-3.5" />
-                {t('contribution.review.content')}
-              </div>
-              <p className="text-lg font-medium italic">"{selectedItem.details}"</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const isEditable = selectedItem && (selectedItem.status === 'pending' || selectedItem.type === 'record');
 
   // 2. Chat Layout
   return (
-    <div className="flex-1 flex flex-col w-full bg-background">
+    <div className="flex-1 flex flex-col w-full bg-background overflow-hidden h-full">
       {/* Top Bar - Mode Switcher */}
-      <div className="h-14 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-center sticky top-0 z-10">
+      <div className="h-14 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-center sticky top-0 z-10 shrink-0">
         <div className="flex bg-muted p-1 rounded-none">
           <button 
-            onClick={() => onModeChange?.('record')} 
+            onClick={() => { onModeChange?.('record'); onSelectItem?.(null); }} 
             className={cn("flex items-center gap-2 px-5 py-1.5 text-sm font-medium rounded-none transition-all", mode === 'record' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}
           >
             <Mic className="h-4 w-4" />
             {t('contribution.modes.record', { defaultValue: 'Record Audio' })}
           </button>
           <button 
-            onClick={() => onModeChange?.('correct')} 
+            onClick={() => { onModeChange?.('correct'); onSelectItem?.(null); }} 
             className={cn("flex items-center gap-2 px-5 py-1.5 text-sm font-medium rounded-none transition-all", mode === 'correct' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}
           >
             <Edit3 className="h-4 w-4" />
@@ -176,23 +195,116 @@ export function WorkArea({ mode, userId, onContributionComplete, selectedItem, o
       </div>
 
       {/* Main Feed Area */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar flex flex-col">
-        {mode === 'record' ? (
-           <ChatFeedRecord 
-             userId={userId} 
-             pendingRecording={pendingRecording}
-             suggestedPhrase={suggestedPhrase}
-             onSubmit={handleTranscriptionComplete}
-             onDiscard={() => setPendingRecording(null)}
-           />
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar flex flex-col min-h-0">
+        {selectedItem ? (
+          <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex items-center justify-between mb-6">
+               <Button variant="ghost" size="sm" onClick={() => onSelectItem?.(null)} className="gap-2 -ml-2 text-muted-foreground">
+                 <ArrowLeft className="h-4 w-4" />
+                 {t('contribution.chat.backToChat', { defaultValue: 'Back to recordings' })}
+               </Button>
+               {isEditable && !isEditing && (
+                 <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                   <Edit3 className="h-4 w-4 mr-2" />
+                   {t('contribution.review.edit', { defaultValue: 'Edit Text' })}
+                 </Button>
+               )}
+            </div>
+
+            <div className="flex items-center gap-3 mb-8">
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <History className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold">{t('contribution.review.title', { defaultValue: 'Contribution Details' })}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {new Date(selectedItem.date).toLocaleDateString()} {t('contribution.time.at', { defaultValue: 'at' })} {new Date(selectedItem.date).toLocaleTimeString()}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-6">
+              {selectedItem.audioUrl && (
+                <div className="p-4 rounded-xl bg-muted/30 border border-border">
+                  <ClipPlayer audioUrl={selectedItem.audioUrl} />
+                </div>
+              )}
+
+              <div className="p-6 rounded-xl bg-muted/30 border border-border space-y-4">
+                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                  <Info className="h-3.5 w-3.5" />
+                  {t('contribution.review.details', { defaultValue: 'Details' })}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">{t('contribution.review.type', { defaultValue: 'Type' })}</p>
+                    <p className="text-sm font-medium capitalize">{selectedItem.type === 'record' ? t('contribution.sidebar.recorded') : t('contribution.sidebar.corrected')}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">{t('contribution.review.status', { defaultValue: 'Status' })}</p>
+                    <div className="flex items-center gap-1.5">
+                      <div className={cn(
+                        "h-2 w-2 rounded-full",
+                        selectedItem.status === 'approved' ? "bg-green-500" : selectedItem.status === 'rejected' ? "bg-red-500" : "bg-amber-500"
+                      )} />
+                      <p className="text-sm font-medium capitalize">{t(`contribution.history.status.${selectedItem.status}`)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 rounded-xl bg-muted/30 border border-border space-y-4">
+                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                  <FileText className="h-3.5 w-3.5" />
+                  {t('contribution.review.content', { defaultValue: 'Content' })}
+                </div>
+                {isEditing ? (
+                  <div className="space-y-4">
+                    <textarea
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      className="w-full min-h-[120px] p-3 rounded-md border border-input bg-background text-base resize-y focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <div className="flex gap-2 justify-end">
+                      <Button variant="ghost" onClick={() => { setIsEditing(false); setEditValue(selectedItem.details); }}>
+                        {t('common.cancel', { defaultValue: 'Cancel' })}
+                      </Button>
+                      <Button onClick={handleSaveEdit} disabled={isSavingEdit || !editValue.trim() || editValue === selectedItem.details}>
+                        {isSavingEdit ? t('common.saving', { defaultValue: 'Saving...' }) : t('common.save', { defaultValue: 'Save Changes' })}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-lg font-medium italic">"{selectedItem.details}"</p>
+                )}
+              </div>
+            </div>
+          </div>
         ) : (
-           <ChatFeedCorrect userId={userId} onComplete={() => onContributionComplete('correct')} />
+          <div className="flex-1 flex flex-col min-h-0 h-full">
+            {mode === 'record' ? (
+               <ChatFeedRecord 
+                 userId={userId} 
+                 pendingRecording={pendingRecording}
+                 suggestedPhrase={suggestedPhrase}
+                 onSubmit={handleTranscriptionComplete}
+                 onDiscard={() => setPendingRecording(null)}
+                 history={history.filter(h => h.type === 'record')}
+                 onSelectItem={onSelectItem}
+               />
+            ) : (
+               <ChatFeedCorrect 
+                 userId={userId} 
+                 onComplete={() => onContributionComplete('correct')} 
+               />
+            )}
+          </div>
         )}
       </div>
 
       {/* Bottom Input Area */}
-      {mode === 'record' && (
-        <div className="p-4 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky bottom-0 z-10">
+      {mode === 'record' && !selectedItem && (
+        <div className="p-4 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky bottom-0 z-10 shrink-0">
           <ChatInputRecord 
             onComplete={handleRecordingComplete} 
             onGetSuggestion={handleGetSuggestion}

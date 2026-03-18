@@ -34,8 +34,8 @@ export function ContributionWorkspace({ user }: ContributionWorkspaceProps) {
   // Single optimized query fetches all dashboard data
   const { data: dashboard, recordContribution } = useUserDashboard(user.uid);
 
-  const handleContributionComplete = async (type: 'record' | 'correct') => {
-    await recordContribution(type);
+  const handleContributionComplete = async (type: 'record' | 'correct', referenceId?: string) => {
+    await recordContribution(type === 'record' ? 'recording' : 'correction', referenceId);
   };
 
   const totalXP = dashboard?.stats.xpTotal ?? 0;
@@ -47,6 +47,8 @@ export function ContributionWorkspace({ user }: ContributionWorkspaceProps) {
     date: h.createdAt,
     status: h.status,
     details: h.details || '',
+    referenceId: h.referenceId,
+    audioUrl: h.audioUrl,
   })) ?? [];
 
   const dailyProgress = dashboard?.stats
@@ -80,6 +82,8 @@ export function ContributionWorkspace({ user }: ContributionWorkspaceProps) {
               selectedItem={selectedHistoryItem}
               onModeChange={setActiveMode}
               onBackToWork={handleBackToWork}
+              history={history}
+              onSelectItem={setSelectedHistoryItem}
             />
           </div>
         ) : (

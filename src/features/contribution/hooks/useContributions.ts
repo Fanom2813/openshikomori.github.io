@@ -27,10 +27,10 @@ export function useCreateContribution(userId: string | undefined) {
     dialect: DialectOption['code'] | undefined,
     contributorProfile: User['profile'],
     isAnonymous: boolean
-  ): Promise<boolean> => {
+  ): Promise<string | null> => {
     if (!userId) {
       setError('You must be signed in to contribute');
-      return false;
+      return null;
     }
 
     setIsSubmitting(true);
@@ -38,22 +38,23 @@ export function useCreateContribution(userId: string | undefined) {
     setSuccess(false);
 
     try {
-      // First create the clip document to get an ID
-      const tempClipId = `temp_${Date.now()}`;
+      // First create a temporary ID for R2 (we don't have the DB ID yet)
+      const tempId = `clip_${Date.now()}`;
 
       // Upload audio to R2
-      const uploadResult = await uploadAudioClip(audioBlob, userId, tempClipId);
+      const uploadResult = await uploadAudioClip(audioBlob, userId, tempId);
 
       if (!uploadResult.success || !uploadResult.url) {
         setError(uploadResult.error || 'Failed to upload audio');
         setIsSubmitting(false);
-        return false;
+        return null;
       }
 
-      // Create the clip document in Firestore
-      const duration = audioBlob.size / 16000; // Rough estimate
+      // Create the clip document in Supabase
+      const durationInSeconds = audioBlob.size / 16000; // Rough estimate for 16kHz mono
+      const duration = Math.max(1, Math.round(durationInSeconds)); // Ensure at least 1 second and integer
 
-      await createClip({
+      const clipId = await createClip({
         audioUrl: uploadResult.url,
         duration,
         language,
@@ -67,14 +68,18 @@ export function useCreateContribution(userId: string | undefined) {
         isAnonymous,
       });
 
+      if (!clipId) {
+        throw new Error('Failed to create clip in database');
+      }
+
       setSuccess(true);
       setIsSubmitting(false);
-      return true;
+      return clipId;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to submit contribution';
       setError(message);
       setIsSubmitting(false);
-      return false;
+      return null;
     }
   }, [userId]);
 
@@ -94,17 +99,23 @@ export function useCreateContribution(userId: string | undefined) {
 }
 
 // Hook for fetching clips to correct (Method 2)
-export function useCorrectionQueue(language?: LanguageOption['code']) {
+export function useCorrectionQueue(userId: string | undefined, language?: LanguageOption['code']) {
   const [clips, setClips] = useState<Clip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchClips = useCallback(async () => {
+    if (!userId) {
+      setClips([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      const data = await getClipsForCorrection(language, 20);
+      const data = await getClipsForCorrection(userId, language, 20);
       setClips(data);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load clips';
@@ -112,7 +123,7 @@ export function useCorrectionQueue(language?: LanguageOption['code']) {
     } finally {
       setLoading(false);
     }
-  }, [language]);
+  }, [userId, language]);
 
   useEffect(() => {
     fetchClips();

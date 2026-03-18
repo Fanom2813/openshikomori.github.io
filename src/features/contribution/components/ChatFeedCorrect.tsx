@@ -162,7 +162,7 @@ function CorrectionBubble({
 
 export function ChatFeedCorrect({ userId, onComplete }: ChatFeedCorrectProps) {
   const { t } = useTranslation();
-  const { clips, loading, error, refetch } = useCorrectionQueue();
+  const { clips, loading, error, refetch } = useCorrectionQueue(userId);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   if (loading) {

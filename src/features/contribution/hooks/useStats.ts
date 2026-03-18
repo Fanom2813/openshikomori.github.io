@@ -33,6 +33,8 @@ export interface ContributionActivity {
   xpEarned: number;
   details?: string;
   status: 'pending' | 'approved' | 'rejected';
+  referenceId?: string;
+  audioUrl?: string;
 }
 
 export interface WeeklyData {
@@ -93,6 +95,8 @@ export function useUserDashboard(userId: string | undefined) {
           xpEarned: number;
           details?: string;
           status: 'pending' | 'approved' | 'rejected';
+          referenceId?: string;
+          audioUrl?: string;
         }>;
         weeklyData: WeeklyData[];
       };
@@ -101,8 +105,8 @@ export function useUserDashboard(userId: string | undefined) {
         stats: {
           xpTotal: parsed.stats.xpTotal,
           xpDaily: parsed.stats.xpDaily,
-          currentStreak: parsed.stats.currentStreak,
-          bestStreak: parsed.stats.bestStreak,
+          currentStreak: parsed.stats.currentStreak || (parsed.stats as any).current_streak || 0,
+          bestStreak: parsed.stats.bestStreak || (parsed.stats as any).best_streak || 0,
           recordingsCount: parsed.stats.recordingsCount,
           correctionsCount: parsed.stats.correctionsCount,
           wordsPreserved: parsed.stats.wordsPreserved,
@@ -139,10 +143,14 @@ export function useUserDashboard(userId: string | undefined) {
       if (!userId) return null;
 
       try {
+        // Validate if referenceId is a valid UUID before passing to RPC
+        // Supabase RPC expects a UUID type for reference_id, not just any string
+        const isUuid = referenceId && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(referenceId);
+        
         const { data: result, error } = await supabase.rpc('record_contribution_v2', {
           user_uuid: userId,
           activity_type: activityType,
-          reference_id: referenceId || null,
+          reference_id: isUuid ? referenceId : null,
           metadata: metadata || {},
         });
 

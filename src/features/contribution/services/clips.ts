@@ -21,6 +21,14 @@ export async function createClip(
       status: 'pending',
       correction_count: 0,
       is_duplicate: false,
+      transcription_history: [
+        {
+          text: clipData.transcription.text,
+          source: 'original',
+          created_at: new Date().toISOString(),
+          contributed_by: clipData.contributedBy,
+        },
+      ],
     })
     .select('id')
     .single();
@@ -37,6 +45,7 @@ export async function createClip(
 
 // Get clips for correction (Method 2)
 export async function getClipsForCorrection(
+  userId: string,
   language?: 'comorian' | 'french' | 'arabic',
   maxResults = 20
 ): Promise<Clip[]> {
@@ -44,19 +53,11 @@ export async function getClipsForCorrection(
     return [];
   }
 
-  let query = supabase
-    .from('clips')
-    .select('*')
-    .in('status', ['pending', 'approved'])
-    .order('correction_count', { ascending: true })
-    .order('created_at', { ascending: false })
-    .limit(maxResults);
-
-  if (language) {
-    query = query.eq('language', language);
-  }
-
-  const { data, error } = await query;
+  const { data, error } = await supabase.rpc('get_clips_for_correction_v2', {
+    p_user_id: userId,
+    p_language: language || null,
+    p_limit: maxResults,
+  });
 
   if (error) {
     console.error('Error fetching clips:', error);
@@ -141,47 +142,20 @@ export async function reviewCorrection(
   correctionId: string,
   decision: 'approved' | 'rejected',
   adminUid: string,
-  _reviewNote?: string
+  reviewNote?: string
 ): Promise<void> {
   if (!supabase || !isSupabaseConfigured) {
     throw new Error('Supabase not initialized');
   }
 
-  // Get the correction
-  const { data: correction, error: fetchError } = await supabase
-    .from('corrections')
-    .select('*')
-    .eq('id', correctionId)
-    .single();
+  const { error } = await supabase.rpc('review_correction_v2', {
+    correction_id: correctionId,
+    decision,
+    admin_uid: adminUid,
+    review_note: reviewNote || null,
+  });
 
-  if (fetchError || !correction) {
-    throw new Error('Correction not found');
-  }
-
-  // Update correction status
-  const { error: updateError } = await supabase
-    .from('corrections')
-    .update({
-      status: decision,
-      reviewed_by: adminUid,
-      reviewed_at: new Date().toISOString(),
-    })
-    .eq('id', correctionId);
-
-  if (updateError) throw updateError;
-
-  // If approved, update the clip transcription
-  if (decision === 'approved') {
-    await supabase
-      .from('clips')
-      .update({
-        transcription: correction.suggested_text,
-        status: 'approved',
-        reviewed_by: adminUid,
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq('id', correction.clip_id);
-  }
+  if (error) throw error;
 }
 
 // Get user clips
@@ -224,6 +198,34 @@ export async function updateUserProfile(
       updated_at: new Date().toISOString(),
     })
     .eq('id', userId);
+
+  if (error) throw error;
+}
+
+// Update own clip transcription
+export async function updateOwnClipTranscription(clipId: string, newText: string): Promise<void> {
+  if (!supabase || !isSupabaseConfigured) {
+    throw new Error('Supabase not initialized');
+  }
+
+  const { error } = await supabase.rpc('update_own_clip_transcription', {
+    p_clip_id: clipId,
+    p_new_text: newText,
+  });
+
+  if (error) throw error;
+}
+
+// Update own correction
+export async function updateOwnCorrection(correctionId: string, newText: string): Promise<void> {
+  if (!supabase || !isSupabaseConfigured) {
+    throw new Error('Supabase not initialized');
+  }
+
+  const { error } = await supabase.rpc('update_own_correction', {
+    p_correction_id: correctionId,
+    p_new_text: newText,
+  });
 
   if (error) throw error;
 }

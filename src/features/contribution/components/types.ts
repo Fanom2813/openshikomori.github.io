@@ -24,6 +24,8 @@ export interface ContributionHistoryItem {
   date: Date;
   status: 'pending' | 'approved' | 'rejected';
   details: string;
+  referenceId?: string;
+  audioUrl?: string;
 }
 
 export interface DailyProgress {

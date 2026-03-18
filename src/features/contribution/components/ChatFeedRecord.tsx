@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, User, Trash2, Mic } from 'lucide-react';
+import { Bot, User, Trash2, Mic, Play, Edit3, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TranscriptionEditor } from './TranscriptionEditor';
 import { useTranslation } from 'react-i18next';
+import { cn } from '@/lib/utils';
+import type { ContributionHistoryItem } from './types';
 
 interface ChatFeedRecordProps {
   userId: string;
@@ -11,9 +13,18 @@ interface ChatFeedRecordProps {
   suggestedPhrase: string | null;
   onSubmit: (data: any) => Promise<void>;
   onDiscard: () => void;
+  history?: ContributionHistoryItem[];
+  onSelectItem?: (item: ContributionHistoryItem) => void;
 }
 
-export function ChatFeedRecord({ userId, pendingRecording, onSubmit, onDiscard }: ChatFeedRecordProps) {
+export function ChatFeedRecord({ 
+  userId, 
+  pendingRecording, 
+  onSubmit, 
+  onDiscard,
+  history = [],
+  onSelectItem
+}: ChatFeedRecordProps) {
   const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -26,10 +37,44 @@ export function ChatFeedRecord({ userId, pendingRecording, onSubmit, onDiscard }
     }
   };
 
+  const hasHistory = history.length > 0;
+
   return (
     <div className="flex-1 flex flex-col justify-end gap-6 min-h-full pb-4">
+      {/* History Items */}
+      <div className="flex flex-col gap-4 mb-4">
+        {history.map((item) => (
+          <motion.div
+            key={item.id}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex flex-col gap-2 max-w-[85%] self-start"
+          >
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 ml-1">
+              <Clock className="h-3 w-3" />
+              {new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              <span className={cn(
+                "ml-2 px-1.5 py-0.5 rounded-none text-[8px]",
+                item.status === 'approved' ? "bg-green-500/10 text-green-500" : item.status === 'rejected' ? "bg-red-500/10 text-red-500" : "bg-amber-500/10 text-amber-500"
+              )}>
+                {item.status}
+              </span>
+            </div>
+            <div className="bg-muted/30 border border-border p-3 rounded-none relative group">
+              <p className="text-sm italic text-foreground pr-8">"{item.details}"</p>
+              <button
+                onClick={() => onSelectItem?.(item)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
+              >
+                <Edit3 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
       <AnimatePresence mode="popLayout">
-        {!pendingRecording && (
+        {!pendingRecording && !hasHistory && (
           <motion.div 
             key="empty"
             initial={{ opacity: 0 }}

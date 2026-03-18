@@ -1,0 +1,18 @@
+name = "openshikomori-r2-worker"
+main = "src/index.ts"
+compatibility_date = "2024-03-18"
+
+# These will be set as secrets using `wrangler secret put`
+# ACCOUNT_ID
+# ACCESS_KEY_ID
+# SECRET_ACCESS_KEY
+# ADMIN_TOKEN
+
+[vars]
+BUCKET_NAME = "openshikomori"
+# Update this with your actual R2.dev URL after enabling it in the dashboard
+PUBLIC_URL = "https://pub-d958e823899b4a339209e037171b8954.r2.dev"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "openshikomori"
