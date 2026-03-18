@@ -7,8 +7,12 @@
     <!-- Primary Meta Tags -->
     <title>OpenShikomori - Shikomori Language AI Models & Dataset</title>
     <meta name="title" content="OpenShikomori - Shikomori Language AI Models & Dataset" />
-    <meta name="description" content="Open-source AI models and speech dataset for the Shikomori language. Preserving Comorian heritage through fine-tuned LLMs and Whisper speech recognition. Free for researchers, educators, and developers." />
-    <meta name="keywords" content="Shikomori, Comorian language, AI, machine learning, speech recognition, NLP, African languages, language preservation, open source, dataset, Whisper, LLM" />
+    <meta name="description" content="The largest open-source AI hub for the Shikomori (Comorian) language. We build and fine-tune models for Whisper (STT), GPT (LLM), Text-to-Speech (TTS), and machine translation to bridge the digital divide for Comoros." />
+    <meta name="keywords" content="GPT Comoros, LLM Comoros, Whisper Comoros, Comorian Translation, Shikomori TTS, GPT Comores, LLM Comores, IA Comores, Traduction Comorien, Shikomori, Langue Comorienne, Comores, Comoros, AI, Intelligence Artificielle, Whisper Comores, Dataset Parole, Speech Dataset, NLP, Shingazidja, Shindzuani, Shimwali, Shimaore" />
+    <meta name="application-name" content="OpenShikomori" />
+    <meta name="apple-mobile-web-app-title" content="OpenShikomori" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="author" content="OpenShikomori" />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://open-shikomori.github.io/" />
@@ -18,21 +22,23 @@
     <link rel="shortcut icon" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/logo.svg" />
     <link rel="manifest" href="/manifest.json" />
-
+    
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://open-shikomori.github.io/" />
-    <meta property="og:title" content="OpenShikomori - Shikomori Language AI Models & Dataset" />
-    <meta property="og:description" content="Open-source AI models and speech dataset for the Shikomori language. Preserving Comorian heritage through fine-tuned LLMs and Whisper speech recognition." />
-    <meta property="og:image" content="https://open-shikomori.github.io/logo.svg" />
     <meta property="og:site_name" content="OpenShikomori" />
+    <meta property="og:url" content="https://open-shikomori.github.io/" />
+    <meta property="og:title" content="OpenShikomori - Bridging the Digital Divide for Comoros" />
+    <meta property="og:description" content="Open-source AI hub for Shikomori. Building models for STT, LLM, TTS, and Translation. Join the mission to digitize Comorian languages." />
+    <meta property="og:image" content="https://open-shikomori.github.io/logo.svg" />
     <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="fr_FR" />
+    <meta property="og:locale:alternate" content="ar_KM" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content="https://open-shikomori.github.io/" />
-    <meta property="twitter:title" content="OpenShikomori - Shikomori Language AI Models & Dataset" />
-    <meta property="twitter:description" content="Open-source AI models and speech dataset for the Shikomori language. Preserving Comorian heritage through fine-tuned LLMs and Whisper speech recognition." />
+    <meta property="twitter:title" content="OpenShikomori - Comorian Language AI Project" />
+    <meta property="twitter:description" content="We're building the future of Shikomori NLP. Contribute your voice today." />
     <meta property="twitter:image" content="https://open-shikomori.github.io/logo.svg" />
 
     <!-- Theme Color -->
@@ -45,12 +51,19 @@
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "OpenShikomori",
+      "alternateName": "Open Shikomori",
       "url": "https://open-shikomori.github.io/",
       "logo": "https://open-shikomori.github.io/logo.svg",
-      "description": "Open-source AI models and speech dataset for the Shikomori language",
+      "description": "An open-source initiative dedicated to preserving the Shikomori (Comorian) language through AI, speech datasets, and fine-tuned machine learning models.",
       "sameAs": [
         "https://github.com/Open-Shikomori"
       ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "fanom2813@gmail.com",
+        "url": "https://github.com/Open-Shikomori",
+        "contactType": "technical support"
+      },
       "foundingPrinciples": [
         "Language preservation",
         "Open source",
@@ -67,21 +80,30 @@
     {
       "@context": "https://schema.org",
       "@type": "Dataset",
-      "name": "OpenShikomori Speech Dataset",
-      "description": "Open dataset of Shikomori language recordings for AI training",
+      "name": "OpenShikomori Speech & Transcription Dataset",
+      "description": "A comprehensive, community-driven dataset of Shikomori language recordings and manual transcriptions for training AI speech recognition (Whisper) and large language models (LLMs).",
       "url": "https://open-shikomori.github.io/dataset",
+      "license": "https://opensource.org/licenses/MIT",
+      "keywords": "Shikomori, Comorian, Speech Dataset, NLP, African Languages, Machine Learning",
       "creator": {
         "@type": "Organization",
         "name": "OpenShikomori"
       },
-      "license": "https://opensource.org/licenses/MIT",
       "inLanguage": ["swb", "fr", "ar"],
       "spatialCoverage": {
         "@type": "Place",
         "name": "Comoros"
-      }
+      },
+      "distribution": [
+        {
+          "@type": "DataDownload",
+          "encodingFormat": "WAV",
+          "contentUrl": "https://open-shikomori.github.io/dataset"
+        }
+      ]
     }
     </script>
+
   </head>
   <body>
     <div id="root"></div>
