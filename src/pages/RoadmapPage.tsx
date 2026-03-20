@@ -5,6 +5,8 @@ import { CheckCircle2, Circle, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { SEO } from "@/shared/ui/SEO";
+import { JoinCommunityCTA } from "@/shared/ui/JoinCommunityCTA";
+import roadmapData from "@/data/roadmap.json";
 
 type RoadmapItem = {
   title: string;
@@ -21,92 +23,15 @@ type RoadmapPhase = {
 export function RoadmapPage() {
   const { t, i18n } = useTranslation();
 
-  const phases: RoadmapPhase[] = [
-    {
-      stage: t("roadmapPage.phases.foundation.stage"),
-      period: t("roadmapPage.phases.foundation.period"),
-      items: [
-        {
-          title: t("roadmapPage.phases.foundation.items.website.title"),
-          description: t("roadmapPage.phases.foundation.items.website.description"),
-          status: "completed",
-        },
-        {
-          title: t("roadmapPage.phases.foundation.items.documentation.title"),
-          description: t("roadmapPage.phases.foundation.items.documentation.description"),
-          status: "completed",
-        },
-        {
-          title: t("roadmapPage.phases.foundation.items.community.title"),
-          description: t("roadmapPage.phases.foundation.items.community.description"),
-          status: "in-progress",
-        },
-      ],
-    },
-    {
-      stage: t("roadmapPage.phases.dataCollection.stage"),
-      period: t("roadmapPage.phases.dataCollection.period"),
-      items: [
-        {
-          title: t("roadmapPage.phases.dataCollection.items.recording.title"),
-          description: t("roadmapPage.phases.dataCollection.items.recording.description"),
-          status: "in-progress",
-        },
-        {
-          title: t("roadmapPage.phases.dataCollection.items.validation.title"),
-          description: t("roadmapPage.phases.dataCollection.items.validation.description"),
-          status: "upcoming",
-        },
-        {
-          title: t("roadmapPage.phases.dataCollection.items.dataset.title"),
-          description: t("roadmapPage.phases.dataCollection.items.dataset.description"),
-          status: "upcoming",
-        },
-      ],
-    },
-    {
-      stage: t("roadmapPage.phases.modelTraining.stage"),
-      period: t("roadmapPage.phases.modelTraining.period"),
-      items: [
-        {
-          title: t("roadmapPage.phases.modelTraining.items.baseline.title"),
-          description: t("roadmapPage.phases.modelTraining.items.baseline.description"),
-          status: "upcoming",
-        },
-        {
-          title: t("roadmapPage.phases.modelTraining.items.finetuning.title"),
-          description: t("roadmapPage.phases.modelTraining.items.finetuning.description"),
-          status: "upcoming",
-        },
-        {
-          title: t("roadmapPage.phases.modelTraining.items.evaluation.title"),
-          description: t("roadmapPage.phases.modelTraining.items.evaluation.description"),
-          status: "upcoming",
-        },
-      ],
-    },
-    {
-      stage: t("roadmapPage.phases.deployment.stage"),
-      period: t("roadmapPage.phases.deployment.period"),
-      items: [
-        {
-          title: t("roadmapPage.phases.deployment.items.api.title"),
-          description: t("roadmapPage.phases.deployment.items.api.description"),
-          status: "upcoming",
-        },
-        {
-          title: t("roadmapPage.phases.deployment.items.opensource.title"),
-          description: t("roadmapPage.phases.deployment.items.opensource.description"),
-          status: "upcoming",
-        },
-        {
-          title: t("roadmapPage.phases.deployment.items.applications.title"),
-          description: t("roadmapPage.phases.deployment.items.applications.description"),
-          status: "upcoming",
-        },
-      ],
-    },
-  ];
+  const phases: RoadmapPhase[] = roadmapData.map((phase: any) => ({
+    stage: t(phase.stage),
+    period: t(phase.period),
+    items: phase.items.map((item: any) => ({
+      title: t(item.title),
+      description: t(item.description),
+      status: item.status,
+    })),
+  }));
 
   const getStatusIcon = (status: RoadmapItem["status"]) => {
     switch (status) {
@@ -164,7 +89,7 @@ export function RoadmapPage() {
       </section>
 
       {/* Roadmap Phases */}
-      <section className="w-full border-b border-border px-6 py-16 sm:px-12 lg:py-24">
+      <section className="w-full px-6 py-16 sm:px-12 lg:py-24">
         <div className="mb-12">
           <p className="text-xs font-bold uppercase tracking-widest text-primary">
             Timeline
@@ -213,27 +138,7 @@ export function RoadmapPage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="w-full px-6 py-16 sm:px-12 lg:py-24">
-        <div className="grid gap-px bg-border lg:grid-cols-2">
-          <div className="bg-background px-6 py-12 sm:px-12">
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-              {t("roadmapPage.cta.title")}
-            </h2>
-          </div>
-          <div className="flex flex-col justify-center bg-background px-6 py-12 sm:px-12">
-            <p className="mb-6 text-muted-foreground">{t("roadmapPage.cta.description")}</p>
-            <a
-              href="https://github.com/Open-Shikomori"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-11 w-fit items-center border border-border bg-foreground px-6 text-sm font-medium text-background transition-opacity hover:opacity-90"
-            >
-              {t("roadmapPage.cta.button")}
-            </a>
-          </div>
-        </div>
-      </section>
+      <JoinCommunityCTA />
     </main>
     </>
   );

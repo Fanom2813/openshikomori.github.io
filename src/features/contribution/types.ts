@@ -6,6 +6,7 @@ export interface User {
   profile?: {
     displayName: string;
     avatar: string;
+    homeIsland?: string;
     isPublic: boolean;
   };
 
@@ -15,8 +16,8 @@ export interface User {
     reviews: number;
   };
 
-  createdAt: Date;
-  lastActiveAt: Date;
+  createdAt: Date | null;
+  lastActiveAt: Date | null;
 }
 
 // Audio Clip (Firestore: clips/{clipId})
@@ -39,13 +40,24 @@ export interface Clip {
     avatar: string;
   };
   isAnonymous: boolean;
-  contributedAt: Date;
+  contributedAt: Date | null;
 
   status: 'pending' | 'approved' | 'rejected' | 'needs_review';
-  reviewedBy?: string;
-  reviewedAt?: Date;
+  reviewedBy?: string | null;
+  reviewedAt?: Date | null;
+  reviewNote?: string | null;
 
   correctionsCount: number;
+  isDuplicate?: boolean;
+  transcriptionHistory?: Array<{
+    text: string;
+    source: string;
+    created_at?: string;
+    contributed_by?: string;
+    correction_id?: string;
+    approved_by?: string;
+    approved_at?: string;
+  }>;
   latestCorrection?: {
     text: string;
     suggestedBy: string;
@@ -60,11 +72,15 @@ export interface Correction {
   originalText: string;
   suggestedText: string;
   suggestedBy: string;
-  suggestedAt: Date;
+  suggestedAt: Date | null;
   status: 'pending' | 'approved' | 'rejected';
-  reviewedBy?: string;
-  reviewNote?: string;
+  reviewedBy?: string | null;
+  reviewedAt?: Date | null;
+  reviewNote?: string | null;
 }
+
+// Contribution mode
+export type ContributionMode = 'record' | 'correct';
 
 // Admin Config (Firestore: config/admin)
 export interface AdminConfig {

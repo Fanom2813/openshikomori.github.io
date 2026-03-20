@@ -18,6 +18,17 @@ export const common = {
     repoPill: "Public code, private dataset",
   },
   or: "or",
+  notFound: {
+    title: "Page Not Found",
+    description: "The page you are looking for doesn't exist, has been moved, or is temporarily unavailable.",
+    backHome: "Back to Home",
+    goBack: "Go Back",
+  },
+  error: {
+    title: "Unexpected Error",
+    description: "Something went wrong while loading this page. Please try refreshing or return home.",
+    refresh: "Try Again",
+  },
   showSuggestion: "Show Suggestion",
   hideSuggestion: "Hide Suggestion",
   auth: {

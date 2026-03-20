@@ -188,7 +188,7 @@ function CorrectionCard({
 }
 
 export function CorrectionQueue({ userId, onComplete }: CorrectionQueueProps) {
-  const { clips, loading, error, refetch } = useCorrectionQueue();
+  const { clips, loading, error, refetch } = useCorrectionQueue(userId);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   if (loading) {
@@ -243,7 +243,6 @@ export function CorrectionQueue({ userId, onComplete }: CorrectionQueueProps) {
   }
 
   const currentClip = clips[currentIndex];
-  const remainingClips = clips.length - currentIndex;
 
   const handleCorrected = () => {
     if (onComplete) onComplete();

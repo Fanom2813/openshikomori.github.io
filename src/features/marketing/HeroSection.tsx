@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SectionJumpButton } from "@/shared/ui/SectionJumpButton";
+import { Button } from "@/components/ui/button";
+import { useContribution } from "../contribution/context/ContributionContext";
 
 interface Dialect {
   name: string;
@@ -19,6 +21,7 @@ interface Dialects {
 
 export function HeroSection() {
   const { t } = useTranslation();
+  const { openContributionModal } = useContribution();
   const dialects = t("hero.dialects", { returnObjects: true }) as Dialects;
 
   return (
@@ -44,16 +47,15 @@ export function HeroSection() {
             </div>
 
             <div className="mt-10 flex flex-wrap gap-4">
-              <SectionJumpButton
-                className="px-8"
+              <Button
+                className="px-8 h-14 text-base rounded-none font-bold"
                 size="lg"
-                targetId="contribution-preview"
-                variant="default"
+                onClick={openContributionModal}
               >
                 {t("hero.primaryCta")}
-              </SectionJumpButton>
+              </Button>
               <SectionJumpButton
-                className="px-8 border-border bg-background/50 backdrop-blur-sm"
+                className="px-8 border-border bg-background/50 backdrop-blur-sm h-14"
                 size="lg"
                 targetId="roadmap"
                 variant="outline"

@@ -10,7 +10,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useCreateContribution, useUpdateProfile } from '../hooks/useContributions';
 import { isSupabaseConfigured } from '../services/supabase';
 import { useContribution } from '../context/ContributionContext';
-import type { ContributionMethod } from '../types';
+import type { ContributionMethod, User as UserType } from '../types';
 
 export function ContributionPanel() {
   const { t } = useTranslation();
@@ -62,7 +62,8 @@ export function ContributionPanel() {
     }
   };
 
-  const handleJoinCommunity = async (profile: { displayName: string; avatar: string }) => {
+  const handleJoinCommunity = async (profile: UserType['profile']) => {
+    if (!profile) return;
     const success = await updateProfile(profile);
     if (success) {
       setShowJoinModal(false);

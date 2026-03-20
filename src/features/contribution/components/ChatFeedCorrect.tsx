@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertCircle, Send, RotateCcw, CheckCircle, Languages, MapPin, SkipForward, Bot, User } from 'lucide-react';
+import { AlertCircle, Send, RotateCcw, CheckCircle, MapPin, SkipForward, Bot, Languages } from 'lucide-react';
 import { useCorrectionQueue, useSubmitCorrection } from '../hooks/useContributions';
 import { ClipPlayer } from './ClipPlayer';
-import type { Clip, LanguageOption, DialectOption } from '../types';
+import type { Clip } from '../types';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
 

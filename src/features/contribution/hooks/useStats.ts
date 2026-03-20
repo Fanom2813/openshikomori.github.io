@@ -65,6 +65,7 @@ export function useUserDashboard(userId: string | undefined) {
     setError(null);
 
     try {
+      if (!supabase) return;
       // Single optimized query gets everything
       const { data: result, error: supabaseError } = await supabase.rpc(
         'get_user_dashboard',
@@ -74,7 +75,7 @@ export function useUserDashboard(userId: string | undefined) {
       if (supabaseError) throw supabaseError;
 
       // Parse the JSON result
-      const parsed = result as {
+      const parsed = result as unknown as {
         stats: {
           xpTotal: number;
           xpDaily: number;
@@ -134,63 +135,23 @@ export function useUserDashboard(userId: string | undefined) {
     fetchDashboard();
   }, [fetchDashboard]);
 
-  const recordContribution = useCallback(
-    async (
-      activityType: 'recording' | 'correction' | 'review',
-      referenceId?: string,
-      metadata?: Record<string, unknown>
-    ) => {
-      if (!userId) return null;
-
-      try {
-        // Validate if referenceId is a valid UUID before passing to RPC
-        // Supabase RPC expects a UUID type for reference_id, not just any string
-        const isUuid = referenceId && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(referenceId);
-        
-        const { data: result, error } = await supabase.rpc('record_contribution_v2', {
-          user_uuid: userId,
-          activity_type: activityType,
-          reference_id: isUuid ? referenceId : null,
-          metadata: metadata || {},
-        });
-
-        if (error) throw error;
-
-        // Refresh dashboard after recording
-        await fetchDashboard();
-
-        return result as {
-          xpEarned: number;
-          streak: number;
-          badgesEarned: Array<{ id: string; name: string; icon: string; tier: number }>;
-        };
-      } catch (err) {
-        console.error('Failed to record contribution:', err);
-        return null;
-      }
-    },
-    [userId, fetchDashboard]
-  );
-
   return {
     data,
     loading,
     error,
     refetch: fetchDashboard,
-    recordContribution,
   };
 }
 
 // Legacy hooks for backward compatibility - now use the single dashboard query
 export function useUserStats(userId: string | undefined) {
-  const { data, loading, error, refetch, recordContribution } = useUserDashboard(userId);
+  const { data, loading, error, refetch } = useUserDashboard(userId);
 
   return {
     stats: data?.stats || null,
     loading,
     error,
     refetch,
-    recordContribution,
   };
 }
 
@@ -249,6 +210,7 @@ export function useLeaderboard(limit: number = 50) {
     setError(null);
 
     try {
+      if (!supabase) return;
       const { data, error: supabaseError } = await supabase.rpc('get_leaderboard', {
         limit_count: limit,
       });

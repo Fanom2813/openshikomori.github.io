@@ -6,13 +6,11 @@ import {
   createCorrection,
   getUserClips,
   updateUserProfile,
-  getPublicContributors,
   isUserAdmin,
   getPendingCorrections,
   reviewCorrection as reviewCorrectionService,
 } from '../services/clips';
 import { uploadAudioClip } from '../services/r2';
-import { isSupabaseConfigured } from '../services/supabase';
 
 // Hook for creating a new contribution (Method 1)
 export function useCreateContribution(userId: string | undefined) {
@@ -25,6 +23,7 @@ export function useCreateContribution(userId: string | undefined) {
     transcription: string,
     language: LanguageOption['code'],
     dialect: DialectOption['code'] | undefined,
+    durationSeconds: number,
     contributorProfile: User['profile'],
     isAnonymous: boolean
   ): Promise<string | null> => {
@@ -50,9 +49,8 @@ export function useCreateContribution(userId: string | undefined) {
         return null;
       }
 
-      // Create the clip document in Supabase
-      const durationInSeconds = audioBlob.size / 16000; // Rough estimate for 16kHz mono
-      const duration = Math.max(1, Math.round(durationInSeconds)); // Ensure at least 1 second and integer
+      // Use the actual recorded duration (passed from component)
+      const duration = Math.max(1, Math.round(durationSeconds)); // Ensure at least 1 second and integer
 
       const clipId = await createClip({
         audioUrl: uploadResult.url,
@@ -260,38 +258,6 @@ export function useUpdateProfile(userId: string | undefined) {
     success,
     updateProfile,
     reset,
-  };
-}
-
-// Hook for fetching public contributors
-export function usePublicContributors(limit = 50) {
-  const [contributors, setContributors] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchContributors = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const data = await getPublicContributors(limit);
-        setContributors(data);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to load contributors';
-        setError(message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchContributors();
-  }, [limit]);
-
-  return {
-    contributors,
-    loading,
-    error,
   };
 }
 

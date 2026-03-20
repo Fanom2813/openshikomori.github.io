@@ -12,7 +12,6 @@ export {
   reviewCorrection,
   getUserClips,
   updateUserProfile,
-  getPublicContributors,
   isUserAdmin,
 } from './services/clips';
 export { uploadAudioClip, isR2Configured } from './services/r2';
@@ -30,7 +29,6 @@ export {
   useSubmitCorrection,
   useUserContributions,
   useUpdateProfile,
-  usePublicContributors,
   useIsAdmin,
   useAdminReview,
 } from './hooks/useContributions';

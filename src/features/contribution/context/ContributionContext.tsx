@@ -76,9 +76,20 @@ export function ContributionProvider({ children }: { children: React.ReactNode }
   }, [refreshUser]);
 
   const openContributionModal = useCallback(() => {
+    if (authLoading) return;
+
+    if (user?.uid) {
+      if (!hasPublicProfile) {
+        setIsProfileModalOpen(true);
+      } else {
+        navigate('/contribute');
+      }
+      return;
+    }
+
     setAuthError(null);
     setIsEntryModalOpen(true);
-  }, []);
+  }, [user, authLoading, hasPublicProfile, navigate]);
 
   const closeEntryModal = useCallback(() => {
     setIsEntryModalOpen(false);
@@ -231,7 +242,7 @@ export function ContributionProvider({ children }: { children: React.ReactNode }
             .eq('id', data.user.id)
             .single();
 
-          if (!profile?.is_public) {
+          if (!(profile as any)?.is_public) {
             setIsProfileModalOpen(true);
           } else {
             navigate('/contribute');

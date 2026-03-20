@@ -1,9 +1,11 @@
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { ArrowUpRight } from "lucide-react";
+import { useContribution } from "../contribution/context/ContributionContext";
 
 export function CTASection() {
   const { t } = useTranslation();
+  const { openContributionModal } = useContribution();
 
   return (
     <section className="w-full border-t border-border bg-background px-6 py-20 sm:px-12 lg:py-32">
@@ -33,12 +35,12 @@ export function CTASection() {
             <ArrowUpRight className="h-4 w-4" />
           </a>
 
-          <a
-            href="#"
-            className="inline-flex items-center gap-2 border border-border bg-background px-8 py-4 text-sm font-semibold uppercase tracking-wider text-foreground transition-colors hover:bg-muted"
+          <button
+            onClick={openContributionModal}
+            className="inline-flex items-center gap-2 border border-border bg-background px-8 py-4 text-sm font-semibold uppercase tracking-wider text-foreground transition-colors hover:bg-muted cursor-pointer"
           >
             {t("cta.getStarted")}
-          </a>
+          </button>
         </div>
       </motion.div>
     </section>

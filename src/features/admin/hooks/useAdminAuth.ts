@@ -19,89 +19,161 @@ export function useAdminAuth() {
 
   // Check auth status on mount
   useEffect(() => {
-    const checkAuth = async () => {
+    let mounted = true;
+
+    const checkAuth = async (source: string) => {
+      console.log(`Admin Auth [${source}]: Checking status...`);
       if (!isSupabaseConfigured) {
-        setState({
-          admin: null,
-          loading: false,
-          error: new Error('Supabase not configured'),
-          isAuthenticated: false,
-        });
+        console.warn(`Admin Auth [${source}]: Supabase not configured`);
+        if (mounted) {
+          setState(prev => ({
+            ...prev,
+            loading: false,
+            error: new Error('Supabase not configured'),
+          }));
+        }
         return;
       }
 
-      const admin = await getCurrentAdmin();
-      setState({
-        admin,
-        loading: false,
-        error: null,
-        isAuthenticated: !!admin,
-      });
+      try {
+        const admin = await getCurrentAdmin();
+        console.log(`Admin Auth [${source}]: Check complete, admin:`, admin?.email || 'none');
+        if (mounted) {
+          setState({
+            admin,
+            loading: false,
+            error: null,
+            isAuthenticated: !!admin,
+          });
+        }
+      } catch (err) {
+        console.error(`Admin Auth [${source}]: Check failed:`, err);
+        if (mounted) {
+          setState(prev => ({
+            ...prev,
+            loading: false,
+            error: err instanceof Error ? err : new Error('Auth check failed'),
+          }));
+        }
+      }
     };
 
-    checkAuth();
+    // Initial check
+    checkAuth('Init');
+
+    // Safety timeout: Ensure loading is cleared even if Supabase hangs
+    const safetyTimeout = setTimeout(() => {
+      if (mounted && state.loading) {
+        console.warn('Admin Auth: Safety timeout reached, forcing loading state to false');
+        setState(prev => ({ ...prev, loading: false }));
+      }
+    }, 5000);
 
     // Listen for auth changes
     if (supabase) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        async (_event, session) => {
-          if (session?.user) {
-            const isAdmin = await checkIsAdmin(session.user.id);
-            if (isAdmin) {
-              const admin = await getCurrentAdmin();
-              setState({
-                admin,
-                loading: false,
-                error: null,
-                isAuthenticated: true,
-              });
+        async (event, session) => {
+          console.log(`Admin Auth [Event]: ${event}`);
+          if (!mounted) return;
+
+          // For any meaningful auth change, re-verify admin status
+          if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+            if (session?.user) {
+              try {
+                const isAdmin = await checkIsAdmin(session.user.id);
+                if (isAdmin) {
+                  const admin = await getCurrentAdmin();
+                  if (mounted) {
+                    setState({
+                      admin,
+                      loading: false,
+                      error: null,
+                      isAuthenticated: true,
+                    });
+                  }
+                } else {
+                  console.warn('Admin Auth: Logged in user is not an admin');
+                  if (mounted) {
+                    setState({
+                      admin: null,
+                      loading: false,
+                      error: null,
+                      isAuthenticated: false,
+                    });
+                  }
+                }
+              } catch (err) {
+                console.error('Admin Auth: Change handling failed:', err);
+              }
             } else {
-              // User is logged in but not admin
-              await signOutAdmin();
+              // No user session
+              if (mounted) {
+                setState({
+                  admin: null,
+                  loading: false,
+                  error: null,
+                  isAuthenticated: false,
+                });
+              }
+            }
+          } else if (event === 'SIGNED_OUT') {
+            if (mounted) {
               setState({
                 admin: null,
                 loading: false,
-                error: new Error('Access denied'),
+                error: null,
                 isAuthenticated: false,
               });
             }
-          } else {
-            setState({
-              admin: null,
-              loading: false,
-              error: null,
-              isAuthenticated: false,
-            });
           }
         }
       );
 
-      return () => subscription.unsubscribe();
+      return () => {
+        mounted = false;
+        clearTimeout(safetyTimeout);
+        subscription.unsubscribe();
+      };
     }
+
+    return () => {
+      mounted = false;
+      clearTimeout(safetyTimeout);
+    };
   }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
-    const { user, error } = await signInAdmin(email, password);
+    try {
+      const { user, error } = await signInAdmin(email, password);
 
-    if (error || !user) {
+      if (error || !user) {
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: error || new Error('Login failed'),
+          isAuthenticated: false,
+        }));
+        return false;
+      }
+
+      setState({
+        admin: user,
+        loading: false,
+        error: null,
+        isAuthenticated: true,
+      });
+      return true;
+    } catch (err) {
       setState((prev) => ({
         ...prev,
         loading: false,
-        error: error || new Error('Login failed'),
+        error: err instanceof Error ? err : new Error('Login failed'),
         isAuthenticated: false,
       }));
       return false;
     }
-
-    setState({
-      admin: user,
-      loading: false,
-      error: null,
-      isAuthenticated: true,
-    });
-    return true;
   }, []);
 
   const logout = useCallback(async () => {

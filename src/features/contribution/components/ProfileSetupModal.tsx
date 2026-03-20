@@ -13,10 +13,8 @@ interface ProfileSetupModalProps {
 
 export function ProfileSetupModal({
   isOpen,
-  onClose,
   onSubmit,
   isSubmitting = false,
-  userEmail,
 }: ProfileSetupModalProps) {
   const { t } = useTranslation();
   const [displayName, setDisplayName] = useState('');
@@ -48,9 +46,6 @@ export function ProfileSetupModal({
           <p className="text-muted-foreground text-sm mt-1">
             {t('auth.profileModal.subtitle')}
           </p>
-          {userEmail && (
-            <p className="text-xs text-muted-foreground mt-2">{userEmail}</p>
-          )}
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">

@@ -1,27 +1,28 @@
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
-  Trophy, Flame, Target, Clock, Globe, TrendingUp, Mic, Edit3, Lock,
-  Sprout, Zap, BookOpen, Star, Award, Crown, Calendar, CalendarCheck, CheckCircle, BarChart3, Medal
+  Trophy, Flame, Target, TrendingUp, Mic, Edit3, Lock,
+  Sprout, Zap, BookOpen, Star, Award, Crown, Calendar, CalendarCheck, CheckCircle, Medal
 } from 'lucide-react';
-import { StatCard, StatCardGroup } from './StatCard';
-import type { UserStats, Badge, ContributionHistoryItem, DailyProgress, WeeklyData } from './types';
+import type { Badge, DailyProgress, WeeklyData } from './types';
 import { useLeaderboard } from '../hooks/useStats';
 import { cn } from '@/lib/utils';
 
 interface StatsPanelProps {
-  userStats: UserStats;
+  userStats: {
+    recordings: number;
+    corrections: number;
+  };
   streak: number;
   personalBestStreak: number;
   badges: Badge[];
   weeklyData: WeeklyData[];
   dailyProgress: DailyProgress;
-  history: ContributionHistoryItem[];
   totalXP: number;
   totalWords: number;
 }
 
-const badgeIcons = {
+const badgeIcons: Record<string, any> = {
   sprout: Sprout,
   zap: Zap,
   flame: Flame,
@@ -45,7 +46,6 @@ export function StatsPanel({
   badges,
   weeklyData,
   dailyProgress,
-  history,
   totalXP,
   totalWords,
 }: StatsPanelProps) {
@@ -82,7 +82,7 @@ export function StatsPanel({
             { label: t('contribution.sidebar.corrected'), value: userStats.corrections, icon: Edit3, color: 'text-amber-500' },
             { label: t('contribution.sidebar.streak'), value: streak, icon: Flame, color: 'text-orange-500', sub: `${t('contribution.sidebar.best')}: ${personalBestStreak}` },
             { label: t('contribution.stats.totalXP'), value: totalXP.toLocaleString(), icon: Trophy, color: 'text-primary', sub: `${totalWords} ${t('contribution.impact.wordsPreserved')}` },
-          ].map((stat, i) => (
+          ].map((stat) => (
             <div key={stat.label} className="bg-background p-8 sm:p-12">
               <stat.icon className={cn("h-8 w-8 mb-6", stat.color)} />
               <p className="text-4xl sm:text-5xl font-black tracking-tighter mb-1">
@@ -224,48 +224,6 @@ export function StatsPanel({
         </div>
       </section>
 
-      {/* 5. Recent History */}
-      <section className="w-full bg-background p-8 sm:p-12 lg:p-16">
-        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-10 flex items-center gap-2">
-          <Clock className="h-4 w-4" />
-          {t('contribution.history.title')}
-        </h3>
-        {history.length === 0 ? (
-          <div className="border-2 border-dashed border-border p-12 text-center">
-            <p className="text-muted-foreground font-bold uppercase tracking-widest text-sm">{t('contribution.history.empty')}</p>
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {history.slice(0, 12).map((item) => (
-              <div
-                key={item.id}
-                className="border border-border p-6 hover:border-primary/30 hover:bg-muted/10 transition-all flex flex-col gap-4"
-              >
-                <div className="flex justify-between items-start">
-                  <div className={cn(
-                    "p-2",
-                    item.type === 'record' ? "bg-teal-50 text-teal-600" : "bg-amber-50 text-amber-600"
-                  )}>
-                    {item.type === 'record' ? <Mic className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
-                  </div>
-                  <div
-                    className={cn(
-                      "h-2 w-2",
-                      item.status === 'approved' ? 'bg-green-500' : item.status === 'rejected' ? 'bg-red-500' : 'bg-amber-500'
-                    )}
-                  />
-                </div>
-                <div>
-                  <p className="font-bold text-sm line-clamp-2 italic mb-2">"{item.details}"</p>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                    {new Date(item.date).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
     </div>
   );
 }

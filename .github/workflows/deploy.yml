@@ -30,6 +30,11 @@ jobs:
         run: bun install
 
       - name: Build website
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY }}
+          VITE_OPENROUTER_API_KEY: ${{ secrets.VITE_OPENROUTER_API_KEY }}
+          VITE_R2_WORKER_URL: ${{ secrets.VITE_R2_WORKER_URL }}
         run: bun run build
 
       - name: Setup Pages

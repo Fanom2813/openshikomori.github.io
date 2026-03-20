@@ -6,7 +6,7 @@ import type { User } from '../types';
 interface JoinCommunityModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (profile: User['profile']) => void;
+  onSubmit: (profile: User['profile'] | undefined) => void;
   isSubmitting?: boolean;
 }
 

@@ -15,7 +15,7 @@ interface ChatInputRecordProps {
   suggestedPhrase: string | null;
 }
 
-export function ChatInputRecord({ onComplete, onGetSuggestion, isSuggesting, suggestedPhrase }: ChatInputRecordProps) {
+export function ChatInputRecord({ onComplete, isSuggesting, suggestedPhrase }: ChatInputRecordProps) {
   const { t } = useTranslation();
   
   const [dialect, setDialect] = useState<DialectOption['code'] | undefined>(undefined);

@@ -1,65 +1,58 @@
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { Database, Mic, FileAudio, Users } from "lucide-react";
+import { Database, Mic, FileAudio, Users, CheckCircle2 } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { SEO } from "@/shared/ui/SEO";
+import { JoinCommunityCTA } from "@/shared/ui/JoinCommunityCTA";
+import siteStats from "@/data/stats.json";
+import siteGoals from "@/data/goals.json";
 
 export function DatasetPage() {
   const { t, i18n } = useTranslation();
 
+  const totalHours = Math.round((siteStats.total_duration_seconds || 0) / 3600);
+
   const stats = [
     {
       icon: Mic,
-      value: "1,247",
+      value: (siteStats.total_speakers || 0).toLocaleString(),
       label: t("dataset.stats.speakers"),
       description: t("dataset.stats.speakersDesc"),
     },
     {
       icon: FileAudio,
-      value: "8,532",
+      value: (siteStats.total_clips || 0).toLocaleString(),
       label: t("dataset.stats.clips"),
       description: t("dataset.stats.clipsDesc"),
     },
     {
       icon: Database,
-      value: "142h",
+      value: `${totalHours}h`,
       label: t("dataset.stats.hours"),
       description: t("dataset.stats.hoursDesc"),
     },
     {
       icon: Users,
-      value: "3",
+      value: Object.keys(siteStats.categories || {}).length.toString(),
       label: t("dataset.stats.languages"),
       description: t("dataset.stats.languagesDesc"),
     },
   ];
 
-  const datasets = [
-    {
-      name: t("dataset.datasets.commonvoice.name"),
-      description: t("dataset.datasets.commonvoice.description"),
-      size: "124 GB",
-      updated: "2025-03-01",
-      downloadUrl: "#",
-    },
-    {
-      name: t("dataset.datasets.validated.name"),
-      description: t("dataset.datasets.validated.description"),
-      size: "89 GB",
-      updated: "2025-03-10",
-      downloadUrl: "#",
-    },
-    {
-      name: t("dataset.datasets.processed.name"),
-      description: t("dataset.datasets.processed.description"),
-      size: "45 GB",
-      updated: "2025-03-12",
-      downloadUrl: "#",
-    },
-  ];
+  const getLanguageProgress = (cat: string) => {
+    const catStats = (siteStats as any)?.categories?.[cat];
+    const durationSeconds = catStats?.duration_seconds || 0;
+    const hours = durationSeconds / 3600;
+    const goalHours = (siteGoals.target_languages_hours as any)?.[cat] || 10;
+    return {
+      hours: hours.toFixed(1),
+      percent: Math.min(100, (hours / goalHours) * 100)
+    };
+  };
+
+  const categories = Object.keys(siteGoals.target_languages_hours || {});
 
   return (
     <>
@@ -125,95 +118,81 @@ export function DatasetPage() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="space-y-8"
             >
-              {["comorian", "french", "arabic"].map((lang) => (
-                <div key={lang}>
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm font-medium text-foreground">
-                      {t(`dataset.progress.${lang}`)}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {t(`dataset.progress.${lang}Hours`)}
-                    </span>
-                  </div>
-                  <Progress
-                    value={lang === "comorian" ? 65 : lang === "french" ? 42 : 28}
-                    className="h-2"
-                  />
-                </div>
-              ))}
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Datasets */}
-      <section className="w-full border-b border-border px-6 py-16 sm:px-12 lg:py-24">
-        <div className="mb-12">
-          <p className="text-xs font-bold uppercase tracking-widest text-primary">
-            Downloads
-          </p>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            {t("dataset.datasets.title")}
-          </h2>
-        </div>
-        <div className="space-y-4">
-          {datasets.map((dataset, index) => (
-            <motion.div
-              key={dataset.name}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-            >
-              <Card className="border-border">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg tracking-tight">{dataset.name}</CardTitle>
-                      <p className="mt-1 text-sm text-muted-foreground">{dataset.description}</p>
+              {categories.map((cat) => {
+                const { hours, percent } = getLanguageProgress(cat);
+                const goal = (siteGoals.target_languages_hours as any)?.[cat] || 10;
+                return (
+                  <div key={cat}>
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-sm font-medium text-foreground capitalize">
+                        {t(`dataset.progress.${cat}`, { defaultValue: cat })}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {hours}h / {goal}h goal
+                      </span>
                     </div>
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {dataset.size}
-                    </span>
+                    <Progress
+                      value={percent}
+                      className="h-2"
+                    />
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      {t("dataset.datasets.updated")}: {dataset.updated}
-                    </span>
-                    <button className="inline-flex h-9 items-center border border-border bg-foreground px-4 text-sm font-medium text-background transition-opacity hover:opacity-90">
-                      {t("dataset.datasets.download")}
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
+                );
+              })}
             </motion.div>
-          ))}
+          </div>
         </div>
       </section>
 
-      {/* Contribute CTA */}
-      <section className="w-full px-6 py-16 sm:px-12 lg:py-24">
-        <div className="grid gap-px bg-border lg:grid-cols-2">
-          <div className="bg-background px-6 py-12 sm:px-12">
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-              {t("dataset.contribute.title")}
+      {/* Download Datasets Section */}
+      <section className="w-full border-b border-border bg-muted/5">
+        <div className="px-6 py-16 sm:px-12 lg:py-24 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mb-16 max-w-3xl mx-auto"
+          >
+            <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+              Building the Open Dataset
             </h2>
-          </div>
-          <div className="flex flex-col justify-center bg-background px-6 py-12 sm:px-12">
-            <p className="mb-6 text-muted-foreground">{t("dataset.contribute.description")}</p>
-            <a
-              href="https://github.com/Open-Shikomori"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-11 w-fit items-center border border-border bg-foreground px-6 text-sm font-medium text-background transition-opacity hover:opacity-90"
-            >
-              {t("dataset.contribute.cta")}
-            </a>
+            <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
+              We are currently in the active collection and validation phase. 
+              Public downloads will be released as soon as we reach our first 50-hour milestone.
+            </p>
+          </motion.div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { id: 'commonvoice', icon: Database, label: 'Mozilla Common Voice Format' },
+              { id: 'validated', icon: CheckCircle2, label: 'Quality-Checked Data' },
+              { id: 'processed', icon: FileAudio, label: 'Pre-computed Features' }
+            ].map((ds, index) => (
+              <motion.div
+                key={ds.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
+                className="flex flex-col items-center border border-border bg-background p-10 transition-colors group"
+              >
+                <div className="mb-6 rounded-full bg-primary/5 p-4">
+                  <ds.icon className="h-8 w-8 text-primary/40" />
+                </div>
+                <h3 className="text-xl font-bold mb-3 text-foreground/70">{ds.label}</h3>
+                <p className="mb-8 text-sm text-muted-foreground leading-relaxed">
+                  {t(`dataset.datasets.${ds.id}.description`)}
+                </p>
+                <div className="mt-auto inline-flex h-11 items-center border border-dashed border-border px-6 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">
+                  Under Construction
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
+
+      <JoinCommunityCTA />
     </main>
     </>
   );

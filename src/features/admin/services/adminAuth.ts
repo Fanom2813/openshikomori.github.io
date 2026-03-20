@@ -39,8 +39,8 @@ export async function signInAdmin(email: string, password: string): Promise<{ us
     const adminUser: AdminUser = {
       id: authData.user.id,
       email: authData.user.email!,
-      role: adminData.role || 'admin',
-      createdAt: new Date(adminData.created_at),
+      role: (adminData.role || 'admin') as 'admin' | 'superadmin',
+      createdAt: new Date(adminData.created_at || new Date().toISOString()),
     };
 
     return { user: adminUser, error: null };
@@ -73,8 +73,8 @@ export async function getCurrentAdmin(): Promise<AdminUser | null> {
   return {
     id: user.id,
     email: user.email!,
-    role: adminData.role || 'admin',
-    createdAt: new Date(adminData.created_at),
+    role: (adminData.role || 'admin') as 'admin' | 'superadmin',
+    createdAt: new Date(adminData.created_at || new Date().toISOString()),
   };
 }
 

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Users, Plus, Search, Edit2, Trash2, MoreVertical, CheckCircle } from 'lucide-react';
+import { Users, Plus, Edit2, Trash2, CheckCircle } from 'lucide-react';
 import { supabase } from '../../contribution/services/supabase';
 import { avatarOptions } from '../../contribution/data/avatars';
-import type { User as UserType } from '../../contribution/types';
+import { DataTable } from '@/components/ui/data-table';
+import { type ColumnDef } from '@tanstack/react-table';
 
 interface Contributor {
   id: string;
@@ -16,7 +17,6 @@ interface Contributor {
 export function AdminContributorsPage() {
   const [contributors, setContributors] = useState<Contributor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingContributor, setEditingContributor] = useState<Contributor | null>(null);
 
@@ -35,14 +35,14 @@ export function AdminContributorsPage() {
       .order('contribution_count', { ascending: false });
 
     if (!error && data) {
-      setContributors(data.map(row => ({
+      setContributors((data as any[]).map(row => ({
         id: row.id,
         displayName: row.display_name || 'Unknown',
         avatar: row.avatar || '👤',
         contributionCount: row.contribution_count || 0,
-        isPublic: row.is_public,
-        createdAt: row.created_at,
-      })));
+        isPublic: !!row.is_public,
+        createdAt: row.created_at || new Date().toISOString(),
+      } as Contributor)));
     }
     setLoading(false);
   };
@@ -60,12 +60,12 @@ export function AdminContributorsPage() {
 
     if (contributor.id) {
       // Update
-      await supabase.from('users').update({
+      await (supabase.from('users').update({
         display_name: contributor.displayName,
         avatar: contributor.avatar,
         contribution_count: contributor.contributionCount,
         is_public: contributor.isPublic,
-      }).eq('id', contributor.id);
+      } as any).eq('id', contributor.id) as any);
     } else {
       // Create - requires auth user first, so this is simplified
       alert('Creating new contributors requires Supabase Auth. Use the invite feature instead.');
@@ -76,104 +76,109 @@ export function AdminContributorsPage() {
     fetchContributors();
   };
 
-  const filteredContributors = contributors.filter(c =>
-    c.displayName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const columns: ColumnDef<Contributor>[] = [
+    {
+      accessorKey: "displayName",
+      header: "Contributor",
+      cell: ({ row }) => {
+        const contributor = row.original;
+        return (
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-full flex items-center justify-center text-xl bg-muted border border-border group-hover:scale-110 transition-transform">
+              {contributor.avatar}
+            </div>
+            <div>
+              <span className="font-bold text-sm text-foreground uppercase tracking-tight">{contributor.displayName}</span>
+              <p className="text-[10px] text-muted-foreground font-mono opacity-50">ID: {contributor.id.slice(0, 8)}</p>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "contributionCount",
+      header: "Contributions",
+      cell: ({ row }) => (
+        <span className="text-sm font-bold text-foreground">{row.getValue("contributionCount")}</span>
+      ),
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Joined",
+      cell: ({ row }) => (
+        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+          {new Date(row.getValue("createdAt")).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "isPublic",
+      header: "Status",
+      cell: ({ row }) => (
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-green-500/10 text-green-500 border border-green-500/20">
+          <CheckCircle className="h-3 w-3 mr-1.5" />
+          Public
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const contributor = row.original;
+        return (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setEditingContributor(contributor)}
+              className="h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
+              title="Edit"
+            >
+              <Edit2 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => handleDelete(contributor.id)}
+              className="h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
+              title="Delete"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        );
+      },
+    },
+  ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Contributors</h1>
-          <p className="text-slate-500">Manage public contributors and their profiles</p>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">Contributors</h1>
+          <p className="text-muted-foreground mt-1 text-sm uppercase tracking-widest font-black">Manage public contributors and their profiles</p>
         </div>
 
         <button
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800"
+          className="inline-flex items-center justify-center gap-2 h-12 px-6 bg-foreground text-background text-xs font-black uppercase tracking-widest rounded-lg hover:bg-primary hover:text-white transition-all shadow-sm"
         >
           <Plus className="h-4 w-4" />
           Add Contributor
         </button>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search contributors..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 h-10 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-      </div>
-
       {loading ? (
-        <div className="text-center py-12">
-          <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-        </div>
-      ) : filteredContributors.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
-          <Users className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500">No contributors found</p>
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Loading contributors...</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Contributor</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Contributions</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Joined</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {filteredContributors.map((contributor) => (
-                <tr key={contributor.id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full flex items-center justify-center text-lg bg-slate-100">
-                        {contributor.avatar}
-                      </div>
-                      <span className="font-medium text-slate-900">{contributor.displayName}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-slate-600">{contributor.contributionCount}</td>
-                  <td className="px-6 py-4 text-slate-600">{new Date(contributor.createdAt).toLocaleDateString()}</td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Public
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setEditingContributor(contributor)}
-                        className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(contributor.id)}
-                        className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable 
+          columns={columns} 
+          data={contributors} 
+          searchKey="displayName"
+        />
       )}
 
-      {/* Add/Edit Modal - simplified version */}
+      {/* Add/Edit Modal */}
       {(showAddModal || editingContributor) && (
         <ContributorModal
           contributor={editingContributor}
@@ -213,79 +218,86 @@ function ContributorModal({ contributor, onClose, onSave }: ContributorModalProp
   const selectedAvatarData = avatarOptions.find(a => a.id === selectedAvatar);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-slate-200">
-          <h2 className="text-lg font-semibold">
-            {contributor ? 'Edit Contributor' : 'Add Contributor'}
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-card rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto border border-border">
+        <div className="p-8 border-b border-border flex items-center justify-between">
+          <h2 className="text-xl font-bold text-foreground tracking-tight italic">
+            {contributor ? 'Edit Profile' : 'New Contributor'}
           </h2>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <Plus className="h-6 w-6 rotate-45" />
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="flex flex-col items-center p-4 bg-slate-50 rounded-lg">
+        <form onSubmit={handleSubmit} className="p-8 space-y-8">
+          <div className="flex flex-col items-center p-6 bg-muted/30 rounded-xl border border-dashed border-border">
             <div
-              className="h-20 w-20 rounded-full flex items-center justify-center text-4xl mb-2"
-              style={{ backgroundColor: selectedAvatarData?.bgColor || '#e2e8f0' }}
+              className="h-24 w-24 rounded-full flex items-center justify-center text-5xl mb-4 shadow-inner"
+              style={{ backgroundColor: selectedAvatarData?.bgColor || 'var(--muted)' }}
             >
               {selectedAvatarData?.emoji || '👤'}
             </div>
-            <p className="font-medium">{displayName || 'Preview'}</p>
+            <p className="font-bold text-foreground uppercase tracking-tight">{displayName || 'Anonymous'}</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-primary mt-1">Preview</p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Display Name</label>
-            <input
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full h-10 px-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-primary"
-              required
-            />
-          </div>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Display Name</label>
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="w-full h-12 px-4 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                required
+                placeholder="Enter name..."
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Avatar</label>
-            <div className="grid grid-cols-6 gap-2 max-h-32 overflow-y-auto p-2 bg-slate-50 rounded-lg">
-              {avatarOptions.map((avatar) => (
-                <button
-                  key={avatar.id}
-                  type="button"
-                  onClick={() => setSelectedAvatar(avatar.id)}
-                  className={`h-10 w-10 rounded-full flex items-center justify-center text-lg transition-all ${
-                    selectedAvatar === avatar.id ? 'ring-2 ring-primary ring-offset-2' : 'hover:scale-110'
-                  }`}
-                  style={{ backgroundColor: avatar.bgColor }}
-                >
-                  {avatar.emoji}
-                </button>
-              ))}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Avatar Choice</label>
+              <div className="grid grid-cols-6 gap-2 max-h-40 overflow-y-auto p-3 bg-muted/20 rounded-xl border border-border custom-scrollbar">
+                {avatarOptions.map((avatar) => (
+                  <button
+                    key={avatar.id}
+                    type="button"
+                    onClick={() => setSelectedAvatar(avatar.id)}
+                    className={`h-11 w-11 rounded-full flex items-center justify-center text-xl transition-all ${
+                      selectedAvatar === avatar.id ? 'ring-2 ring-primary ring-offset-4 ring-offset-background scale-110' : 'hover:scale-105 opacity-60 hover:opacity-100'
+                    }`}
+                    style={{ backgroundColor: avatar.bgColor }}
+                  >
+                    {avatar.emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Contribution Score</label>
+              <input
+                type="number"
+                min={0}
+                value={contributionCount}
+                onChange={(e) => setContributionCount(parseInt(e.target.value) || 0)}
+                className="w-full h-12 px-4 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+              />
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Contribution Count</label>
-            <input
-              type="number"
-              min={0}
-              value={contributionCount}
-              onChange={(e) => setContributionCount(parseInt(e.target.value) || 0)}
-              className="w-full h-10 px-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-4 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-10 border border-slate-300 rounded-lg hover:bg-slate-50"
+              className="flex-1 h-14 border border-border rounded-lg text-xs font-black uppercase tracking-widest hover:bg-muted transition-all"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 h-10 bg-slate-900 text-white rounded-lg hover:bg-slate-800"
+              className="flex-1 h-14 bg-foreground text-background rounded-lg text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-sm"
             >
-              Save
+              Save Changes
             </button>
           </div>
         </form>

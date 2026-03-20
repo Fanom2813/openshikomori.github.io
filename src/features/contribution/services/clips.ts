@@ -3,7 +3,7 @@ import type { Clip, Correction, User } from '../types';
 
 // Create a new clip
 export async function createClip(
-  clipData: Omit<Clip, 'id' | 'contributedAt' | 'status' | 'correctionsCount'>
+  clipData: Omit<Clip, 'id' | 'contributedAt' | 'status' | 'correctionsCount' | 'isDuplicate' | 'transcriptionHistory' | 'reviewedBy' | 'reviewedAt'>
 ): Promise<string | null> {
   if (!supabase || !isSupabaseConfigured) {
     throw new Error('Supabase not initialized');
@@ -35,11 +35,6 @@ export async function createClip(
 
   if (error) throw error;
 
-  // Update user's contribution count
-  await supabase.rpc('increment_contribution_count', {
-    user_id: clipData.contributedBy,
-  });
-
   return data?.id || null;
 }
 
@@ -55,7 +50,7 @@ export async function getClipsForCorrection(
 
   const { data, error } = await supabase.rpc('get_clips_for_correction_v2', {
     p_user_id: userId,
-    p_language: language || null,
+    p_language: language || undefined,
     p_limit: maxResults,
   });
 
@@ -86,7 +81,7 @@ export async function getClip(clipId: string): Promise<Clip | null> {
 
 // Create a correction suggestion
 export async function createCorrection(
-  correction: Omit<Correction, 'id' | 'suggestedAt' | 'status'>
+  correction: Omit<Correction, 'id' | 'suggestedAt' | 'status' | 'reviewedBy' | 'reviewedAt' | 'reviewNote'>
 ): Promise<string | null> {
   if (!supabase || !isSupabaseConfigured) {
     throw new Error('Supabase not initialized');
@@ -105,11 +100,6 @@ export async function createCorrection(
     .single();
 
   if (error) throw error;
-
-  // Update clip correction count
-  await supabase.rpc('increment_correction_count', {
-    clip_id: correction.clipId,
-  });
 
   return data?.id || null;
 }
@@ -152,7 +142,7 @@ export async function reviewCorrection(
     correction_id: correctionId,
     decision,
     admin_uid: adminUid,
-    review_note: reviewNote || null,
+    review_note: reviewNote || undefined,
   });
 
   if (error) throw error;
@@ -191,9 +181,9 @@ export async function updateUserProfile(
   const { error } = await supabase
     .from('users')
     .update({
-      display_name: profile?.displayName,
-      avatar: profile?.avatar,
-      home_island: profile?.homeIsland,
+      display_name: profile?.displayName || null,
+      avatar: profile?.avatar || null,
+      home_island: profile?.homeIsland || null,
       is_public: profile?.isPublic ?? false,
       updated_at: new Date().toISOString(),
     })
@@ -230,37 +220,12 @@ export async function updateOwnCorrection(correctionId: string, newText: string)
   if (error) throw error;
 }
 
-// Get public contributors for the community cloud
-export async function getPublicContributors(
-  maxResults = 50
-): Promise<User[]> {
-  if (!supabase || !isSupabaseConfigured) {
-    return [];
-  }
-
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('is_public', true)
-    .order('contribution_count', { ascending: false })
-    .limit(maxResults);
-
-  if (error) {
-    console.error('Error fetching contributors:', error);
-    return [];
-  }
-
-  return (data || []).map(convertUserRow);
-}
-
 // Check if user is admin
 export async function isUserAdmin(userId: string): Promise<boolean> {
   if (!supabase || !isSupabaseConfigured) {
     return false;
   }
 
-  // For Supabase, we'll use a simple approach - check if user ID is in a config table
-  // Or you can use Row Level Security policies
   const { data, error } = await supabase
     .from('admin_config')
     .select('*')
@@ -271,56 +236,42 @@ export async function isUserAdmin(userId: string): Promise<boolean> {
 }
 
 // Helper functions to convert database rows to types
-function convertClipRow(row: Record<string, unknown>): Clip {
+function convertClipRow(row: any): Clip {
   return {
-    id: row.id as string,
-    audioUrl: row.audio_url as string,
-    duration: row.duration as number,
+    id: row.id,
+    audioUrl: row.audio_url,
+    duration: row.duration,
     language: row.language as 'comorian' | 'french' | 'arabic',
-    dialect: row.dialect as string | undefined,
+    dialect: (row.dialect as any) || undefined,
     transcription: {
-      text: row.transcription as string,
+      text: row.transcription,
       source: 'manual',
     },
-    contributedBy: row.contributed_by as string,
-    contributedAt: new Date(row.created_at as string),
-    status: row.status as 'pending' | 'approved' | 'rejected',
-    correctionsCount: row.correction_count as number,
-    isDuplicate: row.is_duplicate as boolean,
+    contributedBy: row.contributed_by,
+    contributedAt: row.created_at ? new Date(row.created_at) : null,
+    status: (row.status as any) || 'pending',
+    correctionsCount: row.correction_count || 0,
+    isDuplicate: row.is_duplicate || false,
+    isAnonymous: false,
+    transcriptionHistory: (row.transcription_history as any) || [],
+    reviewedBy: row.reviewed_by,
+    reviewedAt: row.reviewed_at ? new Date(row.reviewed_at) : null,
   };
 }
 
-function convertCorrectionRow(row: Record<string, unknown>): Correction {
+function convertCorrectionRow(row: any): Correction {
   return {
-    id: row.id as string,
-    clipId: row.clip_id as string,
-    originalText: row.original_text as string,
-    suggestedText: row.suggested_text as string,
-    suggestedBy: row.suggested_by as string,
-    suggestedAt: new Date(row.created_at as string),
-    status: row.status as 'pending' | 'approved' | 'rejected',
-    reviewedBy: row.reviewed_by as string | undefined,
-    reviewedAt: row.reviewed_at ? new Date(row.reviewed_at as string) : undefined,
+    id: row.id,
+    clipId: row.clip_id,
+    originalText: row.original_text,
+    suggestedText: row.suggested_text,
+    suggestedBy: row.suggested_by,
+    suggestedAt: row.created_at ? new Date(row.created_at) : null,
+    status: (row.status as any) || 'pending',
+    reviewedBy: row.reviewed_by,
+    reviewedAt: row.reviewed_at ? new Date(row.reviewed_at) : null,
+    reviewNote: row.review_note || null,
   };
 }
 
-function convertUserRow(row: Record<string, unknown>): User {
-  return {
-    uid: row.id as string,
-    contributionCount: {
-      recordings: row.contribution_count as number,
-      corrections: 0,
-      reviews: 0,
-    },
-    profile: row.is_public
-      ? {
-          displayName: row.display_name as string,
-          avatar: row.avatar as string,
-          homeIsland: row.home_island as string,
-          isPublic: true,
-        }
-      : undefined,
-    createdAt: new Date(row.created_at as string),
-    lastActiveAt: new Date(row.updated_at as string),
-  };
-}
+

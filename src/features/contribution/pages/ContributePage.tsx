@@ -8,33 +8,35 @@ import { useAuth } from '../hooks/useAuth';
 import { useUpdateProfile } from '../hooks/useContributions';
 import { AlertTriangle } from 'lucide-react';
 import { isSupabaseConfigured } from '../services/supabase';
+import { useContribution } from '../context/ContributionContext';
+import type { User } from '../types';
 
 export function ContributePage() {
-  const { user, loading, hasPublicProfile, refreshUser } = useAuth();
+  const { user, loading, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showConvertModal, setShowConvertModal] = useState(false);
   const { updateProfile, isUpdating } = useUpdateProfile(user?.uid);
+  const { convertAnonymousToPermanent } = useContribution();
 
-  // Redirect to home if not authenticated
   useEffect(() => {
     if (!loading && !user?.uid) {
       navigate('/');
     }
   }, [user, loading, navigate]);
 
-  const handleJoinCommunity = async (data: { displayName: string; homeIsland: string; avatar: string }) => {
-    const success = await updateProfile({
-      displayName: data.displayName,
-      homeIsland: data.homeIsland as 'ngazidja' | 'ndzuani' | 'mwali' | 'maore',
-      avatar: data.avatar,
-      isPublic: true,
-    });
+  const handleJoinCommunity = async (profile: User['profile'] | undefined) => {
+    if (!profile) return;
+    const success = await updateProfile(profile);
 
     if (success) {
       setShowJoinModal(false);
       refreshUser();
     }
+  };
+
+  const handleConvert = async (email: string, password: string) => {
+    return await convertAnonymousToPermanent(email, password);
   };
 
   if (!isSupabaseConfigured) {
@@ -81,7 +83,7 @@ export function ContributePage() {
       <ConvertToPermanentModal
         isOpen={showConvertModal}
         onClose={() => setShowConvertModal(false)}
-        onConvert={handleJoinCommunity}
+        onConvert={handleConvert}
         isLoading={isUpdating}
         error={null}
       />

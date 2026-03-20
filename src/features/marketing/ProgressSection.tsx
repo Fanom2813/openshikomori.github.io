@@ -1,12 +1,13 @@
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
+import siteGoals from "@/data/goals.json";
 
 export function ProgressSection() {
   const { t } = useTranslation();
 
   const stats = [
-    { value: "100+", label: t("progress.hoursGoal") },
-    { value: "4", label: t("progress.dialects") },
+    { value: `${siteGoals.target_hours}+`, label: t("progress.hoursGoal") },
+    { value: `${siteGoals.target_dialects}`, label: t("progress.dialects") },
     { value: "1", label: t("progress.openDataset") },
   ];
 

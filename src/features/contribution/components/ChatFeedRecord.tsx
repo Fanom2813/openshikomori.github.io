@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, User, Trash2, Mic, Play, Edit3, Clock } from 'lucide-react';
+import { User, Trash2, Mic, Edit3, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TranscriptionEditor } from './TranscriptionEditor';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import type { ContributionHistoryItem } from './types';
 
 interface ChatFeedRecordProps {
-  userId: string;
+  userId: string | undefined;
   pendingRecording: { blob: Blob; duration: number; language: string; dialect?: string } | null;
   suggestedPhrase: string | null;
   onSubmit: (data: any) => Promise<void>;
@@ -18,7 +18,6 @@ interface ChatFeedRecordProps {
 }
 
 export function ChatFeedRecord({ 
-  userId, 
   pendingRecording, 
   onSubmit, 
   onDiscard,
@@ -112,8 +111,9 @@ export function ChatFeedRecord({
                   </Button>
                 </div>
                 
-                <TranscriptionEditor 
+                <TranscriptionEditor
                   audioUrl={URL.createObjectURL(pendingRecording.blob)}
+                  duration={Math.round(pendingRecording.duration / 1000)}
                   onSubmit={handleSubmit}
                   onBack={onDiscard}
                   isSubmitting={isSubmitting}

@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import type { ContributionMode, ContributionHistoryItem } from './types';
 import { Mic, Edit3, History, ArrowLeft, Info, FileText } from 'lucide-react';
@@ -17,7 +16,7 @@ import { ClipPlayer } from './ClipPlayer';
 interface WorkAreaProps {
   mode: ContributionMode;
   userId: string;
-  onContributionComplete: (type: 'record' | 'correct', referenceId?: string) => void;
+  onContributionComplete: () => void;
   selectedItem?: ContributionHistoryItem | null;
   onModeChange?: (mode: ContributionMode) => void;
   onBackToWork?: () => void;
@@ -80,7 +79,7 @@ export function WorkArea({
     }
   };
 
-  const { submitContribution, isSubmitting } = useCreateContribution(userId);
+  const { submitContribution } = useCreateContribution(userId);
 
   const handleRecordingComplete = (blob: Blob, duration: number, metadata: { language: string, dialect?: string }) => {
     setPendingRecording({
@@ -142,14 +141,15 @@ export function WorkArea({
         data.transcription,
         data.language as any,
         data.dialect as any,
+        data.duration,
         undefined, // We'll let the service handle profile or lack thereof
         false      // isAnonymous
       );
 
       if (clipId) {
         setPendingRecording(null);
-        // We call onContributionComplete with the real clipId
-        onContributionComplete('record', clipId);
+        // Triggers handle the stats, we just notify completion
+        onContributionComplete();
         toast.success(t('contribution.chat.success', { defaultValue: 'Contribution recorded!' }));
         // Get a fresh suggestion for the next recording
         handleGetSuggestion();
@@ -295,7 +295,7 @@ export function WorkArea({
             ) : (
                <ChatFeedCorrect 
                  userId={userId} 
-                 onComplete={() => onContributionComplete('correct')} 
+                 onComplete={() => onContributionComplete()} 
                />
             )}
           </div>

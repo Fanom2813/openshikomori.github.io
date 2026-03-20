@@ -1,14 +1,10 @@
-import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router';
-import { Mic, Edit3, ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
+import { useLocation } from 'react-router';
 import { WorkArea } from './WorkArea';
 import { StatsPanel } from './StatsPanel';
 import { useUserDashboard } from '../hooks/useStats';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import type { ContributionMode } from '../types';
 import type { ContributionHistoryItem } from './types';
+import type { ContributionMode } from '../types';
 
 interface ContributionWorkspaceProps {
   user: {
@@ -22,9 +18,7 @@ interface ContributionWorkspaceProps {
 }
 
 export function ContributionWorkspace({ user }: ContributionWorkspaceProps) {
-  const { t } = useTranslation();
   const location = useLocation();
-  const navigate = useNavigate();
   
   const view = location.pathname.includes('/stats') ? 'stats' : 'contribute';
   
@@ -32,10 +26,11 @@ export function ContributionWorkspace({ user }: ContributionWorkspaceProps) {
   const [selectedHistoryItem, setSelectedHistoryItem] = useState<ContributionHistoryItem | null>(null);
 
   // Single optimized query fetches all dashboard data
-  const { data: dashboard, recordContribution } = useUserDashboard(user.uid);
+  const { data: dashboard, refetch } = useUserDashboard(user.uid);
 
-  const handleContributionComplete = async (type: 'record' | 'correct', referenceId?: string) => {
-    await recordContribution(type === 'record' ? 'recording' : 'correction', referenceId);
+  const handleContributionComplete = async () => {
+    // Wait for the background trigger to finish then refresh UI
+    await refetch();
   };
 
   const totalXP = dashboard?.stats.xpTotal ?? 0;
@@ -43,9 +38,9 @@ export function ContributionWorkspace({ user }: ContributionWorkspaceProps) {
 
   const history = dashboard?.history.map((h) => ({
     id: h.id,
-    type: h.activityType === 'recording' ? 'record' : 'correct',
+    type: (h.activityType === 'recording' ? 'record' : 'correct') as 'record' | 'correct',
     date: h.createdAt,
-    status: h.status,
+    status: h.status as 'pending' | 'approved' | 'rejected',
     details: h.details || '',
     referenceId: h.referenceId,
     audioUrl: h.audioUrl,
@@ -95,7 +90,6 @@ export function ContributionWorkspace({ user }: ContributionWorkspaceProps) {
               badges={dashboard?.badges ?? []}
               weeklyData={dashboard?.weeklyData ?? []}
               dailyProgress={dailyProgress}
-              history={history}
               totalXP={totalXP}
               totalWords={totalWords}
             />

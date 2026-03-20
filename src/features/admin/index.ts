@@ -12,4 +12,6 @@ export { AdminLayout } from './ui/AdminLayout';
 export { AdminLoginPage } from './pages/AdminLoginPage';
 export { AdminDashboardPage } from './pages/AdminDashboardPage';
 export { AdminClipsPage } from './pages/AdminClipsPage';
+export { AdminCorrectionsPage } from './pages/AdminCorrectionsPage';
 export { AdminContributorsPage } from './pages/AdminContributorsPage';
+export { AdminSettingsPage } from './pages/AdminSettingsPage';

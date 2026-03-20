@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, Square, Play, RotateCcw, AlertCircle } from 'lucide-react';
+import { Mic, Square, Play, RotateCcw } from 'lucide-react';
 import { useAudioRecorder, formatDuration } from '../hooks/useAudioRecorder';
 
 interface AudioRecorderProps {
   onRecordingComplete: (blob: Blob, duration: number) => void;
-  onCancel: () => void;
+  onCancel?: () => void;
 }
 
-export function AudioRecorder({ onRecordingComplete, onCancel }: AudioRecorderProps) {
+export function AudioRecorder({ onRecordingComplete }: AudioRecorderProps) {
   const {
     recordingState,
     audioBlob,
     audioUrl,
     duration,
-    error,
+    error: _error,
     waveformData,
     startRecording,
     stopRecording,

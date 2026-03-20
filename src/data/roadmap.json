@@ -1,0 +1,102 @@
+[
+  {
+    "stage": "roadmapPage.phases.foundation.stage",
+    "period": "roadmapPage.phases.foundation.period",
+    "order_index": 1,
+    "items": [
+      {
+        "title": "roadmapPage.phases.foundation.items.website.title",
+        "description": "roadmapPage.phases.foundation.items.website.description",
+        "status": "completed",
+        "order_index": 1
+      },
+      {
+        "title": "roadmapPage.phases.foundation.items.documentation.title",
+        "description": "roadmapPage.phases.foundation.items.documentation.description",
+        "status": "completed",
+        "order_index": 2
+      },
+      {
+        "title": "roadmapPage.phases.foundation.items.community.title",
+        "description": "roadmapPage.phases.foundation.items.community.description",
+        "status": "in-progress",
+        "order_index": 3
+      }
+    ]
+  },
+  {
+    "stage": "roadmapPage.phases.dataCollection.stage",
+    "period": "roadmapPage.phases.dataCollection.period",
+    "order_index": 2,
+    "items": [
+      {
+        "title": "roadmapPage.phases.dataCollection.items.recording.title",
+        "description": "roadmapPage.phases.dataCollection.items.recording.description",
+        "status": "in-progress",
+        "order_index": 1
+      },
+      {
+        "title": "roadmapPage.phases.dataCollection.items.validation.title",
+        "description": "roadmapPage.phases.dataCollection.items.validation.description",
+        "status": "upcoming",
+        "order_index": 2
+      },
+      {
+        "title": "roadmapPage.phases.dataCollection.items.dataset.title",
+        "description": "roadmapPage.phases.dataCollection.items.dataset.description",
+        "status": "upcoming",
+        "order_index": 3
+      }
+    ]
+  },
+  {
+    "stage": "roadmapPage.phases.modelTraining.stage",
+    "period": "roadmapPage.phases.modelTraining.period",
+    "order_index": 3,
+    "items": [
+      {
+        "title": "roadmapPage.phases.modelTraining.items.baseline.title",
+        "description": "roadmapPage.phases.modelTraining.items.baseline.description",
+        "status": "upcoming",
+        "order_index": 1
+      },
+      {
+        "title": "roadmapPage.phases.modelTraining.items.finetuning.title",
+        "description": "roadmapPage.phases.modelTraining.items.finetuning.description",
+        "status": "upcoming",
+        "order_index": 2
+      },
+      {
+        "title": "roadmapPage.phases.modelTraining.items.evaluation.title",
+        "description": "roadmapPage.phases.modelTraining.items.evaluation.description",
+        "status": "upcoming",
+        "order_index": 3
+      }
+    ]
+  },
+  {
+    "stage": "roadmapPage.phases.deployment.stage",
+    "period": "roadmapPage.phases.deployment.period",
+    "order_index": 4,
+    "items": [
+      {
+        "title": "roadmapPage.phases.deployment.items.api.title",
+        "description": "roadmapPage.phases.deployment.items.api.description",
+        "status": "upcoming",
+        "order_index": 1
+      },
+      {
+        "title": "roadmapPage.phases.deployment.items.opensource.title",
+        "description": "roadmapPage.phases.deployment.items.opensource.description",
+        "status": "upcoming",
+        "order_index": 2
+      },
+      {
+        "title": "roadmapPage.phases.deployment.items.applications.title",
+        "description": "roadmapPage.phases.deployment.items.applications.description",
+        "status": "upcoming",
+        "order_index": 3
+      }
+    ]
+  }
+]

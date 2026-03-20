@@ -11,6 +11,8 @@ import { HomePage } from "@/pages/HomePage";
 import { RoadmapPage } from "@/pages/RoadmapPage";
 import { TermsPage } from "@/pages/TermsPage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
+import { NotFoundPage } from "@/pages/NotFoundPage";
+import { ErrorPage } from "@/pages/ErrorPage";
 import { PublicLayout } from "@/shared/ui/PublicLayout";
 import {
   ContributePage,
@@ -22,45 +24,16 @@ import {
   AdminLoginPage,
   AdminDashboardPage,
   AdminClipsPage,
+  AdminCorrectionsPage,
   AdminContributorsPage,
+  AdminSettingsPage,
 } from "@/features/admin";
-
-function PublicRouteError() {
-  const error = useRouteError();
-
-  const title = isRouteErrorResponse(error)
-    ? `${error.status} ${error.statusText}`
-    : "Something went wrong";
-  const description = isRouteErrorResponse(error)
-    ? "The page could not be loaded. Return to the homepage and try again."
-    : "The public site hit an unexpected error. Return to the homepage and try again.";
-
-  return (
-    <main className="min-h-screen bg-[var(--page-background)] px-6 py-16 text-foreground sm:px-10">
-      <div className="mx-auto flex max-w-2xl flex-col gap-5 border border-border/60 bg-card/90 p-8 shadow-xl">
-        <p className="text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-primary">
-          Comorian Voice Commons
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
-        <p className="text-base leading-7 text-muted-foreground">{description}</p>
-        <div>
-          <Link
-            className="inline-flex h-11 items-center border border-border bg-primary px-5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-            to="/"
-          >
-            Return home
-          </Link>
-        </div>
-      </div>
-    </main>
-  );
-}
 
 export const appRouter = createHashRouter([
   {
     path: "/",
     element: <PublicLayout />,
-    errorElement: <PublicRouteError />,
+    errorElement: <ErrorPage />,
     children: [
       {
         index: true,
@@ -86,13 +59,17 @@ export const appRouter = createHashRouter([
         path: "privacy",
         element: <PrivacyPage />,
       },
+      {
+        path: "*",
+        element: <NotFoundPage />,
+      },
     ],
   },
   // Contribute Routes - Separate layout for post-auth experience
   {
     path: "/contribute",
     element: <ContributeLayout />,
-    errorElement: <PublicRouteError />,
+    errorElement: <ErrorPage />,
     children: [
       {
         index: true,
@@ -112,7 +89,7 @@ export const appRouter = createHashRouter([
   {
     path: "/admin",
     element: <AdminLayout />,
-    errorElement: <PublicRouteError />,
+    errorElement: <ErrorPage />,
     children: [
       {
         index: true,
@@ -123,14 +100,23 @@ export const appRouter = createHashRouter([
         element: <AdminClipsPage />,
       },
       {
+        path: "corrections",
+        element: <AdminCorrectionsPage />,
+      },
+      {
         path: "contributors",
         element: <AdminContributorsPage />,
+      },
+      {
+        path: "settings",
+        element: <AdminSettingsPage />,
       },
     ],
   },
   {
     path: "/admin/login",
     element: <AdminLoginPage />,
-    errorElement: <PublicRouteError />,
+    errorElement: <ErrorPage />,
   },
 ]);
+

@@ -105,61 +105,63 @@ export function AdminDashboardPage() {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-500">Overview of your contribution system</p>
+        <h1 className="text-3xl font-bold text-foreground tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground mt-1 text-sm uppercase tracking-widest font-black">Overview of your contribution system</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
             <div
               key={stat.label}
-              className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm"
+              className="bg-card p-8 rounded-xl border border-border shadow-sm group hover:border-primary/50 transition-all"
             >
-              <div className={`inline-flex p-2 rounded-lg ${stat.bgColor} ${stat.color} mb-4`}>
-                <Icon className="h-5 w-5" />
+              <div className={`inline-flex p-3 rounded-lg ${stat.bgColor} ${stat.color} mb-6 transition-transform group-hover:scale-110`}>
+                <Icon className="h-6 w-6" />
               </div>
-              <p className="text-2xl font-bold text-slate-900">
+              <p className="text-3xl font-bold text-foreground tracking-tight">
                 {loading ? '-' : stat.value.toLocaleString()}
               </p>
-              <p className="text-sm text-slate-500">{stat.label}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">{stat.label}</p>
             </div>
           );
         })}
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Quick Actions</h2>
-        <div className="flex flex-wrap gap-3">
-          <a
-            href="/admin/clips"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
-          >
-            <Mic className="h-4 w-4" />
-            Review Clips
-          </a>
-          <a
-            href="/admin/corrections"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            <Edit3 className="h-4 w-4" />
-            Review Corrections
-          </a>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Quick Actions */}
+        <div className="bg-card rounded-xl border border-border shadow-sm p-8">
+          <h2 className="text-lg font-bold text-foreground mb-6 uppercase tracking-tight">Quick Actions</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <a
+              href="/admin/clips"
+              className="flex items-center justify-center gap-3 h-14 bg-foreground text-background text-xs font-black uppercase tracking-widest rounded-lg hover:bg-primary hover:text-white transition-all"
+            >
+              <Mic className="h-4 w-4" />
+              Review Clips
+            </a>
+            <a
+              href="/admin/corrections"
+              className="flex items-center justify-center gap-3 h-14 bg-background border border-border text-foreground text-xs font-black uppercase tracking-widest rounded-lg hover:bg-muted transition-all"
+            >
+              <Edit3 className="h-4 w-4" />
+              Review Corrections
+            </a>
+          </div>
         </div>
-      </div>
 
-      {/* Recent Activity Placeholder */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Recent Activity</h2>
-        <div className="text-center py-8 text-slate-400">
-          <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-          <p>Activity feed coming soon</p>
+        {/* Recent Activity Placeholder */}
+        <div className="bg-card rounded-xl border border-border shadow-sm p-8">
+          <h2 className="text-lg font-bold text-foreground mb-6 uppercase tracking-tight">Recent Activity</h2>
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground/30 border-2 border-dashed border-border rounded-lg bg-background/50">
+            <AlertCircle className="h-10 w-10 mb-4 stroke-[1.5]" />
+            <p className="text-[10px] font-black uppercase tracking-widest">Activity feed coming soon</p>
+          </div>
         </div>
       </div>
     </div>

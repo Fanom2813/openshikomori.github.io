@@ -31,15 +31,13 @@ export function useAuth(): AuthState & {
 
       if (error || !profile) {
         // Create new user document for email/password users
-        const { data: newProfile, error: createError } = await supabase
+        const { error: createError } = await supabase
           .from('users')
           .insert({
             id: userId,
             is_public: false,
             contribution_count: 0,
-          })
-          .select()
-          .single();
+          });
 
         if (createError) throw createError;
 
@@ -48,7 +46,7 @@ export function useAuth(): AuthState & {
           contributionCount: { recordings: 0, corrections: 0, reviews: 0 },
           createdAt: new Date(),
           lastActiveAt: new Date(),
-        };
+        } as User;
       }
 
       return {
@@ -61,13 +59,13 @@ export function useAuth(): AuthState & {
         profile: profile.is_public
           ? {
               displayName: profile.display_name || '',
-              avatar: profile.avatar,
-              homeIsland: profile.home_island,
+              avatar: profile.avatar || '',
+              homeIsland: profile.home_island || undefined,
               isPublic: true,
             }
           : undefined,
-        createdAt: new Date(profile.created_at),
-        lastActiveAt: new Date(profile.updated_at),
+        createdAt: profile.created_at ? new Date(profile.created_at) : null,
+        lastActiveAt: profile.updated_at ? new Date(profile.updated_at) : null,
       };
     } catch (err) {
       console.error('Error fetching/creating user doc:', err);
@@ -96,6 +94,7 @@ export function useAuth(): AuthState & {
 
     // Check for existing session
     const initAuth = async () => {
+      if (!supabase) return;
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         const userDoc = await fetchUserDoc(session.user.id);

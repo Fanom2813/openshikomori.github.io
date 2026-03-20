@@ -8,10 +8,12 @@ interface TranscriptionEditorProps {
   initialLanguage?: LanguageOption['code'];
   initialDialect?: DialectOption['code'];
   audioUrl: string | null;
+  duration?: number;
   onSubmit: (data: {
     transcription: string;
     language: LanguageOption['code'];
     dialect?: DialectOption['code'];
+    duration: number;
   }) => void;
   onBack: () => void;
   isSubmitting?: boolean;
@@ -22,6 +24,7 @@ export function TranscriptionEditor({
   initialLanguage = 'comorian',
   initialDialect,
   audioUrl,
+  duration = 0,
   onSubmit,
   onBack,
   isSubmitting = false,
@@ -40,6 +43,7 @@ export function TranscriptionEditor({
       transcription: transcription.trim(),
       language,
       dialect,
+      duration,
     });
   };
 

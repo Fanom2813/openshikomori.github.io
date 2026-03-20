@@ -1,0 +1,9 @@
+{
+  "target_hours": 100,
+  "target_dialects": 4,
+  "target_languages_hours": {
+    "arabic": 100,
+    "french": 100,
+    "comorian": 100
+  }
+}
